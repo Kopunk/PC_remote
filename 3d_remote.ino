@@ -3,13 +3,14 @@
 
 #include "WiFi_ssid_pass.h"
 
-#define PORT 9999
+#define PORT_LOCAL 2999
+#define PORT_REMOTE 3999
 
 WiFiUDP UDP;
 
 char reply[] = "Hello\n";
 
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE + 1];
+//char packetBuffer[UDP_TX_PACKET_MAX_SIZE + 1];
 
 void setup() {
   Serial.begin(115200);
@@ -24,19 +25,15 @@ void setup() {
 
   Serial.println("\n Connected");
   Serial.println(WiFi.localIP());
+  Serial.println(UDP.remotePort());
 
-  UDP.begin(PORT);
+  UDP.begin(PORT_LOCAL);
 
 }
 
 void loop() {
   int packetSize = UDP.parsePacket();
   if (packetSize) {
-    int n = UDP.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
-    packetBuffer[n] = 0;
-    Serial.println("Contents:");
-    Serial.println(packetBuffer);
-
     UDP.beginPacket("192.168.1.100", UDP.remotePort());
     UDP.write(reply);
     Serial.println(UDP.remotePort());

@@ -1,14 +1,22 @@
 #!/bin/python3
 
 import socket
+from time import time
+
+REMOTE_IP = "192.168.1.230"
+REMOTE_PORT = 2999
+remote_addr = (REMOTE_IP, REMOTE_PORT)
 
 UDP_IP = "192.168.1.100"
-UDP_PORT = 2999
+UDP_PORT = 3999
+server_addr = (UDP_IP, UDP_PORT)
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-sock.bind((UDP_IP, UDP_PORT))
+s.bind(server_addr)
+
+s.sendto(bytes(1), remote_addr)
 
 while True:
-    data, addr = sock.recvfrom(1024)
+    data, addr = s.recvfrom(4092)
     print(f"received: {data}")
