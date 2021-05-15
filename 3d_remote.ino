@@ -8,7 +8,7 @@
 
 WiFiUDP UDP;
 
-char reply[] = "Hello\n";
+char reply[] = "Hello\r\n";
 
 //char packetBuffer[UDP_TX_PACKET_MAX_SIZE + 1];
 
@@ -29,15 +29,16 @@ void setup() {
 
   UDP.begin(PORT_LOCAL);
 
+  while (true) {
+    int packetSize = UDP.parsePacket();
+    if (packetSize) { break; }
+  }
 }
 
 void loop() {
-  int packetSize = UDP.parsePacket();
-  if (packetSize) {
-    UDP.beginPacket("192.168.1.100", UDP.remotePort());
-    UDP.write(reply);
-    Serial.println(UDP.remotePort());
-    UDP.endPacket();
-    //delay(500);
-  }  
+  UDP.beginPacket("192.168.1.100", PORT_REMOTE); // UDP.remotePort()
+  UDP.write(reply);
+  //Serial.println("sent");
+  UDP.endPacket();
+  //delay(500);
 }

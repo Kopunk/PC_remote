@@ -17,6 +17,12 @@ s.bind(server_addr)
 
 s.sendto(bytes(1), remote_addr)
 
+t = time()
+c = 0
 while True:
     data, addr = s.recvfrom(4092)
-    print(f"received: {data}")
+    c += 1
+    if time() - t > 1:
+        print(f"received {c} packets")
+        c = 0
+        t = time()
