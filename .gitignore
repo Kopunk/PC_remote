@@ -1,4 +1,2 @@
-inols-clangd-err.log
-inols-clangd.log
-inols-err.log
-inols.log
+*.log
+WiFi_ssid_pass.h
