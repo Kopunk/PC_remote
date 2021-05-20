@@ -1,19 +1,36 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
+#include <Adafruit_MPU6050.h>
+#include <Wire.h>
+
 #include "WiFi_ssid_pass.h"
+
+#include <string>
 
 #define PORT_LOCAL 2999
 #define PORT_REMOTE 3999
 
 WiFiUDP UDP;
 
-char reply[] = "Hello\r\n";
+Adafruit_MPU6050 MPU;
 
-//char packetBuffer[UDP_TX_PACKET_MAX_SIZE + 1];
+sensors_event_t acc, gyro, temp;
+float sensors[7];
 
 void setup() {
   Serial.begin(115200);
+
+  // Initialize MPU
+  while (!MPU.begin()) {
+    Serial.println("Failed to initialize MPU6050");
+  }
+
+  Serial.println(MPU.getAccelerometerRange());
+  Serial.println(MPU.getGyroRange());
+  Serial.println(MPU.getFilterBandwidth());
+
+  // Initialize UDP
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(SSID, PASS);
@@ -36,9 +53,28 @@ void setup() {
 }
 
 void loop() {
-  UDP.beginPacket("192.168.1.100", PORT_REMOTE); // UDP.remotePort()
-  UDP.write(reply);
-  //Serial.println("sent");
+  MPU.getEvent(&acc, &gyro, &temp);
+
+  // arduino float is 32 bits
+  sensors[0] = acc.acceleration.x;
+  sensors[1] = acc.acceleration.y;
+  sensors[2] = acc.acceleration.z;
+
+  sensors[3] = gyro.gyro.x;
+  sensors[4] = gyro.gyro.y;
+  sensors[5] = gyro.gyro.z;
+
+  sensors[6] = temp.temperature;
+
+  String msg = "";
+
+  for (int i = 0; i < 6; i++) {  // temp sensor isn't necessary
+    msg = String(msg + ':' + sensors[i]);
+  }
+
+  UDP.beginPacket("192.168.1.100", PORT_REMOTE);  // UDP.remotePort()
+  UDP.write(msg.c_str());
+  Serial.println("sent");
   UDP.endPacket();
   //delay(500);
 }

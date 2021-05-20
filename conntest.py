@@ -21,8 +21,4 @@ t = time()
 c = 0
 while True:
     data, addr = s.recvfrom(4092)
-    c += 1
-    if time() - t > 1:
-        print(f"received {c} packets")
-        c = 0
-        t = time()
+    print(data)
