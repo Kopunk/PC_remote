@@ -18,17 +18,22 @@ Adafruit_MPU6050 MPU;
 sensors_event_t acc, gyro, temp;
 float sensors[7];
 
+int buttonPin = D0;
+
 void setup() {
   Serial.begin(115200);
+
+  // Initialize button
+  pinMode(buttonPin, INPUT);
+
+  // Press button to continue
+  Serial.println("Press to continue");
+  while (!digitalRead(buttonPin)) {delay(10);}
 
   // Initialize MPU
   while (!MPU.begin()) {
     Serial.println("Failed to initialize MPU6050");
   }
-
-  Serial.println(MPU.getAccelerometerRange());
-  Serial.println(MPU.getGyroRange());
-  Serial.println(MPU.getFilterBandwidth());
 
   // Initialize UDP
 

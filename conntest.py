@@ -17,8 +17,15 @@ s.bind(server_addr)
 
 s.sendto(bytes(1), remote_addr)
 
-t = time()
-c = 0
 while True:
     data, addr = s.recvfrom(4092)
-    print(data)
+    x = data.decode()
+
+    assert x.startswith(":"), "Unexpected data recieved"
+    x = x[1:]
+    
+    x = x.split(":")
+    x = [float(x_) for x_ in x]
+    acc, gyro = x[:3], x[3:]
+
+    print(f"acc: {acc[0]}\t{acc[1]}\t{acc[2]}") 
