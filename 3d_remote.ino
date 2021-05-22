@@ -8,6 +8,7 @@
 
 #include <string>
 
+#define IP_REMOTE "192.168.1.100"
 #define PORT_LOCAL 2999
 #define PORT_REMOTE 3999
 
@@ -20,6 +21,8 @@ float sensors[7];
 
 int buttonPin = D3;
 
+bool buttonPressed = false;
+const char endMsg[] = ":end";
 
 void setup() {
   Serial.begin(115200);
@@ -75,9 +78,16 @@ void loop() {
   }
 
   if (buttonHold(buttonPin)) {
-    UDP.beginPacket("192.168.1.100", PORT_REMOTE);  // UDP.remotePort()
+    buttonPressed = true;
+    UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
     UDP.write(msg.c_str());
     Serial.println("sent");
+    UDP.endPacket();
+  } else if (buttonPressed == true){
+    buttonPressed = false;
+    UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
+    UDP.write(endMsg);
+    Serial.println("sent endMsg");
     UDP.endPacket();
   }
 }
