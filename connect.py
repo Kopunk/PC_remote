@@ -5,6 +5,7 @@ import csv
 
 class ConnectRemote:
     END_MSG = "end"
+    SPECIAL_MSG = "spec"
 
     def __init__(self):
         self.remote_ip = "192.168.1.230"
@@ -48,6 +49,8 @@ class ConnectRemote:
 
         if x == ConnectRemote.END_MSG:
             return False
+        elif x == ConnectRemote.SPECIAL_MSG:
+            return True
         
         x = x.split(":")
         x = [float(x_) for x_ in x]
@@ -68,6 +71,8 @@ class ConnectRemote:
                     
                     data = self.data_receive_decode()
                     while data != False:
+                        if data == True:
+                            break
                         data_writer.writerow(data[0])
                         data = self.data_receive_decode()
 

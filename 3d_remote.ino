@@ -31,6 +31,7 @@ void setup() {
 
   // Initialize button
   pinMode(buttonPinMain, INPUT);
+  pinMode(buttonPinSec, INPUT);
 
   // Initialize MPU
   while (!MPU.begin()) {
