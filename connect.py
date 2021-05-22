@@ -2,6 +2,9 @@
 
 import socket
 import csv
+from time import time
+
+from pynput.mouse import Controller, Button
 
 class ConnectRemote:
     END_MSG = "end"
@@ -12,33 +15,33 @@ class ConnectRemote:
         self.remote_port = 2999
         self.remote_addr = (self.remote_ip, self.remote_port)
 
-        self.udp_ip = "192.168.1.100"
-        self.udp_port = 3999
-        self.server_addr = (self.udp_ip, self.udp_port)
+        self.server_ip = "192.168.1.100"
+        self.server_port = 3999
+        self.server_addr = (self.server_ip, self.server_port)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s.bind(self.server_addr)
         self.s.sendto(bytes(1), self.remote_addr)  # send simple data to enable remote
 
-    def receive(self):
-        """Contents of previous 'conntest.py'"""
-        data, addr = self.s.recvfrom(4092)
-        x = data.decode()
+    # def receive(self):
+    #     """Contents of previous 'conntest.py'"""
+    #     data, addr = self.s.recvfrom(4092)
+    #     x = data.decode()
 
-        assert x.startswith(":"), "Unexpected data recieved"
-        x = x[1:]
+    #     assert x.startswith(":"), "Unexpected data recieved"
+    #     x = x[1:]
 
-        x = x.split(":")
-        x = [float(x_) for x_ in x]
-        acc, gyro = x[:3], x[3:]
+    #     x = x.split(":")
+    #     x = [float(x_) for x_ in x]
+    #     acc, gyro = x[:3], x[3:]
 
-        # c += 1
+    #     # c += 1
 
-        # if c >= 500:  # ~250 readings / s
-        #     print(f"500 packages in {time()-t} s")  
-        #     c = 0
-        #     t = time()
-        print(f"acc: {acc[0]}\t{acc[1]}\t{acc[2]}") 
+    #     # if c >= 500:  # ~250 readings / s
+    #     #     print(f"500 packages in {time()-t} s")  
+    #     #     c = 0
+    #     #     t = time()
+    #     print(f"acc: {acc[0]}\t{acc[1]}\t{acc[2]}") 
 
     def data_receive_decode(self):
         data, addr = self.s.recvfrom(4092)
@@ -76,4 +79,44 @@ class ConnectRemote:
                         data_writer.writerow(data[0])
                         data = self.data_receive_decode()
 
+    def cursor(self, mode: str = "gyro"):
+        mouse = Controller()
+
+        print("Press main button to enable cursor movement")
+        while(not (self.data_receive_decode() == False)): continue
+
+        print("Cursor control while pressing main. Double-click main to quit.")
+
+        accel_multiplier = 2.5
+        accel_treshold = .6
+        gyro_multiplier = 8
+        gyro_treshold = .1
+        counter = None
+
+        while(True):
+            data = self.data_receive_decode()
+            if data == True:
+                mouse.click(Button.left)
+                continue
+            if data == False:
+                if counter == None:
+                    counter = time()
+                elif time() - counter < .3:
+                    break
+                counter = time()
+                continue
+
+            if mode == "gyro":
+                data = data[1]
+                if abs(data[2]) > gyro_treshold:
+                    mouse.move(- int(data[2]*gyro_multiplier), 0)
+                if abs(data[0]) > gyro_treshold:
+                    mouse.move(0, - int(data[0]*gyro_multiplier))
+            else:
+                data = data[0]
+                if abs(data[0]) > accel_treshold:
+                    mouse.move(- int(data[0]) * accel_multiplier, 0)
+                if abs(data[1]) > accel_treshold:
+                    mouse.move(0, - int(data[1]) * accel_multiplier)
+            
 
