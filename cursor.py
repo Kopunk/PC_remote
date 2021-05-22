@@ -4,4 +4,4 @@ from connect import ConnectRemote
 
 if __name__ == "__main__":
     conn = ConnectRemote()
-    conn.cursor("gyro")
+    conn.cursor()

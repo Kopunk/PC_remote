@@ -2,7 +2,7 @@
 
 import socket
 import csv
-from time import time
+from time import time, sleep
 
 from pynput.mouse import Controller, Button
 
@@ -82,13 +82,13 @@ class ConnectRemote:
     def cursor(self, mode: str = "gyro"):
         mouse = Controller()
 
-        print("Press main button to enable cursor movement")
+        print(f"'{mode}' mode. Press main button to enable cursor movement")
         while(not (self.data_receive_decode() == False)): continue
 
         print("Cursor control while pressing main. Double-click main to quit.")
 
         accel_multiplier = 2.5
-        accel_treshold = .6
+        accel_treshold = .7
         gyro_multiplier = 8
         gyro_treshold = .1
         counter = None
@@ -97,6 +97,7 @@ class ConnectRemote:
             data = self.data_receive_decode()
             if data == True:
                 mouse.click(Button.left)
+                while(self.data_receive_decode() == True): continue
                 continue
             if data == False:
                 if counter == None:
@@ -112,7 +113,20 @@ class ConnectRemote:
                     mouse.move(- int(data[2]*gyro_multiplier), 0)
                 if abs(data[0]) > gyro_treshold:
                     mouse.move(0, - int(data[0]*gyro_multiplier))
-            else:
+
+            elif mode == "hybrid":
+                # data = data
+                if abs(data[1][2]) > gyro_treshold:
+                    mouse.move(- int(data[1][2]*gyro_multiplier), 0)
+                elif abs(data[0][0]) > accel_treshold and abs(data[0][0]) < 2:
+                    mouse.move(- int(data[0][0]), 0)
+
+                if abs(data[1][0]) > gyro_treshold:
+                    mouse.move(0, - int(data[1][0]*gyro_multiplier))
+                elif abs(data[0][1]) > accel_treshold and abs(data[0][1]) < 2:
+                    mouse.move(0, - int(data[0][1]))
+                
+            else:  # mode == accel
                 data = data[0]
                 if abs(data[0]) > accel_treshold:
                     mouse.move(- int(data[0]) * accel_multiplier, 0)
