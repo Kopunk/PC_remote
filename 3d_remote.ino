@@ -18,17 +18,14 @@ Adafruit_MPU6050 MPU;
 sensors_event_t acc, gyro, temp;
 float sensors[7];
 
-int buttonPin = D0;
+int buttonPin = D3;
+
 
 void setup() {
   Serial.begin(115200);
 
   // Initialize button
   pinMode(buttonPin, INPUT);
-
-  // Press button to continue
-  Serial.println("Press to continue");
-  while (!digitalRead(buttonPin)) {delay(10);}
 
   // Initialize MPU
   while (!MPU.begin()) {
@@ -77,9 +74,28 @@ void loop() {
     msg = String(msg + ':' + sensors[i]);
   }
 
-  UDP.beginPacket("192.168.1.100", PORT_REMOTE);  // UDP.remotePort()
-  UDP.write(msg.c_str());
-  Serial.println("sent");
-  UDP.endPacket();
-  //delay(500);
+  if (buttonHold(buttonPin)) {
+    UDP.beginPacket("192.168.1.100", PORT_REMOTE);  // UDP.remotePort()
+    UDP.write(msg.c_str());
+    Serial.println("sent");
+    UDP.endPacket();
+  }
+}
+
+bool buttonPress(int buttonPin) {
+  // register button press on release
+  if (!digitalRead(buttonPin)) {
+    delay(50);
+    if (digitalRead(buttonPin)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool buttonHold(int buttonPin) {
+  if (!digitalRead(buttonPin)) {
+    return true;
+  }
+  return false;
 }
