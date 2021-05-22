@@ -3,4 +3,4 @@ from connect import ConnectRemote
 
 if __name__ == "__main__":
     conn = ConnectRemote()
-    conn.train(5, ["A", "B", "C"])
+    conn.train(30, ["A", "B", "C", "D"])

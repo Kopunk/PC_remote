@@ -60,7 +60,7 @@ class ConnectRemote:
             chars = [chr(i) for i in range(ord("A"), ord("Z")+1)]
 
         for c in chars:
-            print(f"Now reading '{c}' character.")
+            print(f"Now reading '{c}' gesture.")
             for i in range(repeat):
                 with open(f"train_char/{c}{i}.csv", mode="w") as data_file:
                     data_writer = csv.writer(data_file, delimiter=",")

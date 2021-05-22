@@ -19,16 +19,18 @@ Adafruit_MPU6050 MPU;
 sensors_event_t acc, gyro, temp;
 float sensors[7];
 
-int buttonPin = D3;
+const int buttonPinMain = D3;
+const int buttonPinSec = D4;
 
 bool buttonPressed = false;
 const char endMsg[] = ":end";
+const char specialMsg[] = ":spec";
 
 void setup() {
   Serial.begin(115200);
 
   // Initialize button
-  pinMode(buttonPin, INPUT);
+  pinMode(buttonPinMain, INPUT);
 
   // Initialize MPU
   while (!MPU.begin()) {
@@ -77,7 +79,7 @@ void loop() {
     msg = String(msg + ':' + sensors[i]);
   }
 
-  if (buttonHold(buttonPin)) {
+  if (buttonHold(buttonPinMain)) {
     buttonPressed = true;
     UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
     UDP.write(msg.c_str());
@@ -90,21 +92,28 @@ void loop() {
     Serial.println("sent endMsg");
     UDP.endPacket();
   }
+
+  if (buttonHold(buttonPinSec)) {
+    UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
+    UDP.write(specialMsg);
+    Serial.println("sent specialMsg");
+    UDP.endPacket();
+  }
 }
 
-bool buttonPress(int buttonPin) {
+bool buttonPress(int buttonPinMain) {
   // register button press on release
-  if (!digitalRead(buttonPin)) {
+  if (!digitalRead(buttonPinMain)) {
     delay(50);
-    if (digitalRead(buttonPin)) {
+    if (digitalRead(buttonPinMain)) {
       return true;
     }
   }
   return false;
 }
 
-bool buttonHold(int buttonPin) {
-  if (!digitalRead(buttonPin)) {
+bool buttonHold(int buttonPinMain) {
+  if (!digitalRead(buttonPinMain)) {
     return true;
   }
   return false;
