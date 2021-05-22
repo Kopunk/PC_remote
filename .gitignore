@@ -1,2 +1,4 @@
 *.log
 WiFi_ssid_pass.h
+*.csv
+__pycache__/
