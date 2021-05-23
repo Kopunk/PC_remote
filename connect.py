@@ -74,27 +74,19 @@ class ConnectRemote:
         accel_treshold = .7
         gyro_multiplier = 8
         gyro_treshold = .1
-        counter_main = None  # time of last release
-        counter_sec = None
+        counter_main = time()  # time of last release
         double_click_time = .3
 
         while(True):
             data = self.data_receive_decode()
             if data == "sec_press": continue
             if data == "sec_rel":
-                if counter_sec == None:
-                    counter_sec = time()
-                elif time() - counter_sec < double_click_time:
-                    mouse.click(Button.left, 2)
-                    counter_sec = None
-                else:
-                    mouse.click(Button.left)
-                    counter_sec = time()
+                mouse.click(Button.left)
+                print("single click")
                 continue
             if data == "main_rel":
-                if counter_main == None:
-                    counter_main = time()
-                elif time() - counter_main < double_click_time:
+                if time() - counter_main < double_click_time:
+                    print("exit")
                     break
                 counter_main = time()
                 continue

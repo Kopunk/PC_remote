@@ -108,18 +108,6 @@ void loop() {
   }
 }
 
-// // UNUSED
-// bool buttonPress(int buttonPinMain) {
-//   // register button press on release
-//   if (!digitalRead(buttonPinMain)) {
-//     delay(50);
-//     if (digitalRead(buttonPinMain)) {
-//       return true;
-//     }
-//   }
-//   return false;
-// }
-
 bool buttonHold(int buttonPinMain) {
   if (!digitalRead(buttonPinMain)) {
     return true;
