@@ -8,7 +8,8 @@ from pynput.mouse import Controller, Button
 
 class ConnectRemote:
     END_MSG = "end"
-    SPECIAL_MSG = "spec"
+    SEC_PRESS_MSG = "spec"
+    SEC_RELEASE_MSG = "rel"
 
     def __init__(self):
         self.remote_ip = "192.168.1.230"
@@ -23,26 +24,6 @@ class ConnectRemote:
         self.s.bind(self.server_addr)
         self.s.sendto(bytes(1), self.remote_addr)  # send simple data to enable remote
 
-    # def receive(self):
-    #     """Contents of previous 'conntest.py'"""
-    #     data, addr = self.s.recvfrom(4092)
-    #     x = data.decode()
-
-    #     assert x.startswith(":"), "Unexpected data recieved"
-    #     x = x[1:]
-
-    #     x = x.split(":")
-    #     x = [float(x_) for x_ in x]
-    #     acc, gyro = x[:3], x[3:]
-
-    #     # c += 1
-
-    #     # if c >= 500:  # ~250 readings / s
-    #     #     print(f"500 packages in {time()-t} s")  
-    #     #     c = 0
-    #     #     t = time()
-    #     print(f"acc: {acc[0]}\t{acc[1]}\t{acc[2]}") 
-
     def data_receive_decode(self):
         data, addr = self.s.recvfrom(4092)
         x = data.decode()
@@ -52,7 +33,7 @@ class ConnectRemote:
 
         if x == ConnectRemote.END_MSG:
             return False
-        elif x == ConnectRemote.SPECIAL_MSG:
+        elif x == ConnectRemote.SEC_PRESS_MSG:
             return True
         
         x = x.split(":")

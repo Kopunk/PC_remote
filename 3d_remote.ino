@@ -18,9 +18,12 @@ float sensors[7];
 const int buttonPinMain = D3;
 const int buttonPinSec = D4;
 
-bool buttonPressed = false;
+bool buttonPressedMain = false;
+bool buttonPressedSec = false;
+
 const char endMsg[] = ":end";
-const char specialMsg[] = ":spec";
+const char pressSecMsg[] = ":spec";
+const char releaseSecMsg[] = ":rel";
 
 void setup() {
   Serial.begin(115200);
@@ -45,8 +48,8 @@ void setup() {
   }
 
   Serial.println("\n Connected");
+  Serial.println("My IP is:");
   Serial.println(WiFi.localIP());
-  Serial.println(UDP.remotePort());
 
   UDP.begin(PORT_LOCAL);
 
@@ -77,13 +80,13 @@ void loop() {
   }
 
   if (buttonHold(buttonPinMain)) {
-    buttonPressed = true;
+    buttonPressedMain = true;
     UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
     UDP.write(msg.c_str());
     Serial.println("sent");
     UDP.endPacket();
-  } else if (buttonPressed == true){
-    buttonPressed = false;
+  } else if (buttonPressedMain == true){
+    buttonPressedMain = false;
     UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
     UDP.write(endMsg);
     Serial.println("sent endMsg");
@@ -91,23 +94,32 @@ void loop() {
   }
 
   if (buttonHold(buttonPinSec)) {
+    buttonPressedSec = true;
     UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
-    UDP.write(specialMsg);
-    Serial.println("sent specialMsg");
+    UDP.write(pressSecMsg);
+    Serial.println("sent pressSecMsg");
     UDP.endPacket();
+  } else if (buttonPressedSec == true){  // signals releasing of secondary button
+    buttonPressedSec = false;
+    UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
+    UDP.write(releaseSecMsg);
+    Serial.println("sent releaseSecMsg");
+    UDP.endPacket();
+
   }
 }
 
-bool buttonPress(int buttonPinMain) {
-  // register button press on release
-  if (!digitalRead(buttonPinMain)) {
-    delay(50);
-    if (digitalRead(buttonPinMain)) {
-      return true;
-    }
-  }
-  return false;
-}
+// // UNUSED
+// bool buttonPress(int buttonPinMain) {
+//   // register button press on release
+//   if (!digitalRead(buttonPinMain)) {
+//     delay(50);
+//     if (digitalRead(buttonPinMain)) {
+//       return true;
+//     }
+//   }
+//   return false;
+// }
 
 bool buttonHold(int buttonPinMain) {
   if (!digitalRead(buttonPinMain)) {
