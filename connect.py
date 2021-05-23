@@ -6,6 +6,7 @@ from time import time, sleep
 
 from pynput.mouse import Controller, Button
 
+
 class ConnectRemote:
     MAIN_RELEASE_MSG = "end"
     SEC_PRESS_MSG = "spec"
@@ -22,7 +23,8 @@ class ConnectRemote:
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s.bind(self.server_addr)
-        self.s.sendto(bytes(1), self.remote_addr)  # send simple data to enable remote
+        # send simple data to enable remote
+        self.s.sendto(bytes(1), self.remote_addr)
 
     def data_receive_decode(self):
         data, addr = self.s.recvfrom(4092)
@@ -37,13 +39,13 @@ class ConnectRemote:
             return "sec_press"
         elif x == ConnectRemote.SEC_RELEASE_MSG:
             return "sec_rel"
-        
+
         x = x.split(":")
         x = [float(x_) for x_ in x]
         acc, gyro = x[:3], x[3:]
 
         return acc, gyro
-    
+
     def train(self, repeat: int = 20, chars: list = []):
         if chars == []:
             chars = [chr(i) for i in range(ord("A"), ord("Z")+1)]
@@ -54,7 +56,7 @@ class ConnectRemote:
                 with open(f"train_char/{c}{i}.csv", mode="w") as data_file:
                     data_writer = csv.writer(data_file, delimiter=",")
                     print(f"{c} {i}")
-                    
+
                     data = self.data_receive_decode()
                     while data != "main_rel":
                         if data == "sec_press":
@@ -62,11 +64,38 @@ class ConnectRemote:
                         data_writer.writerow(data[0])
                         data = self.data_receive_decode()
 
+    def train_prepare_data(self, sample_data=False):
+        self.train_labels = []
+        self.train = []
+        if sample_data:
+            max_line_count = 0
+            for c in "ABCD":
+                for i in range(30):
+                    with open(f"train_char/{c}{i}.csv") as data_file:
+                        csv_reader = csv.reader(data_file)
+                        row_sum = sum(1 for row in csv_reader)
+                        if row_sum > max_line_count:
+                            max_line_count = row_sum
+                    with open(f"train_char/{c}{i}.csv") as data_file:
+                        csv_reader = csv.reader(data_file)
+                        row_array = [[float(x) for x in row]
+                                     for row in csv_reader]
+                    self.train_labels.append(c)
+                    self.train.append(row_array)
+        for i in range(len(self.train)):
+            for j in range(max_line_count - len(self.train[i])):
+                self.train[i].append([0, 0, 0])
+            # print(len(self.train[i]))
+        # print(self.train[-1])
+
+        # return train_labels, train
+
     def cursor(self, mode: str = "gyro"):
         mouse = Controller()
 
         print(f"'{mode}' mode. Press main button to enable cursor movement")
-        while(self.data_receive_decode() != "main_rel"): continue
+        while(self.data_receive_decode() != "main_rel"):
+            continue
 
         print("Cursor control while pressing main. Double-click main to quit.")
 
@@ -79,7 +108,8 @@ class ConnectRemote:
 
         while(True):
             data = self.data_receive_decode()
-            if data == "sec_press": continue
+            if data == "sec_press":
+                continue
             if data == "sec_rel":
                 mouse.click(Button.left)
                 print("single click")
@@ -109,12 +139,15 @@ class ConnectRemote:
                     mouse.move(0, - int(data[1][0]*gyro_multiplier))
                 elif abs(data[0][1]) > accel_treshold and abs(data[0][1]) < 2:
                     mouse.move(0, - int(data[0][1]))
-                
+
             else:  # mode == accel
                 data = data[0]
                 if abs(data[0]) > accel_treshold:
                     mouse.move(- int(data[0]) * accel_multiplier, 0)
                 if abs(data[1]) > accel_treshold:
                     mouse.move(0, - int(data[1]) * accel_multiplier)
-            
 
+
+if __name__ == "__main__":
+    test = ConnectRemote()
+    test.train_prepare_data(True)
