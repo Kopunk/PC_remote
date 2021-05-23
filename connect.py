@@ -7,7 +7,7 @@ from time import time, sleep
 from pynput.mouse import Controller, Button
 
 class ConnectRemote:
-    END_MSG = "end"
+    MAIN_RELEASE_MSG = "end"
     SEC_PRESS_MSG = "spec"
     SEC_RELEASE_MSG = "rel"
 
@@ -31,10 +31,12 @@ class ConnectRemote:
         assert x.startswith(":"), "Unexpected data recieved"
         x = x[1:]
 
-        if x == ConnectRemote.END_MSG:
-            return False
+        if x == ConnectRemote.MAIN_RELEASE_MSG:
+            return "main_rel"
         elif x == ConnectRemote.SEC_PRESS_MSG:
-            return True
+            return "sec_press"
+        elif x == ConnectRemote.SEC_RELEASE_MSG:
+            return "sec_rel"
         
         x = x.split(":")
         x = [float(x_) for x_ in x]
@@ -54,8 +56,8 @@ class ConnectRemote:
                     print(f"{c} {i}")
                     
                     data = self.data_receive_decode()
-                    while data != False:
-                        if data == True:
+                    while data != "main_rel":
+                        if data == "sec_press":
                             break
                         data_writer.writerow(data[0])
                         data = self.data_receive_decode()
@@ -64,7 +66,7 @@ class ConnectRemote:
         mouse = Controller()
 
         print(f"'{mode}' mode. Press main button to enable cursor movement")
-        while(not (self.data_receive_decode() == False)): continue
+        while(self.data_receive_decode() != "main_rel"): continue
 
         print("Cursor control while pressing main. Double-click main to quit.")
 
@@ -72,20 +74,29 @@ class ConnectRemote:
         accel_treshold = .7
         gyro_multiplier = 8
         gyro_treshold = .1
-        counter = None
+        counter_main = None  # time of last release
+        counter_sec = None
+        double_click_time = .3
 
         while(True):
             data = self.data_receive_decode()
-            if data == True:
-                mouse.click(Button.left)
-                while(self.data_receive_decode() == True): continue
+            if data == "sec_press": continue
+            if data == "sec_rel":
+                if counter_sec == None:
+                    counter_sec = time()
+                elif time() - counter_sec < double_click_time:
+                    mouse.click(Button.left, 2)
+                    counter_sec = None
+                else:
+                    mouse.click(Button.left)
+                    counter_sec = time()
                 continue
-            if data == False:
-                if counter == None:
-                    counter = time()
-                elif time() - counter < .3:
+            if data == "main_rel":
+                if counter_main == None:
+                    counter_main = time()
+                elif time() - counter_main < double_click_time:
                     break
-                counter = time()
+                counter_main = time()
                 continue
 
             if mode == "gyro":

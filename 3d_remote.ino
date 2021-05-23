@@ -85,7 +85,7 @@ void loop() {
     UDP.write(msg.c_str());
     Serial.println("sent");
     UDP.endPacket();
-  } else if (buttonPressedMain == true){
+  } else if (buttonPressedMain == true) {
     buttonPressedMain = false;
     UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
     UDP.write(endMsg);
@@ -99,13 +99,12 @@ void loop() {
     UDP.write(pressSecMsg);
     Serial.println("sent pressSecMsg");
     UDP.endPacket();
-  } else if (buttonPressedSec == true){  // signals releasing of secondary button
+  } else if (buttonPressedSec == true) {  // signals releasing of secondary button
     buttonPressedSec = false;
     UDP.beginPacket(IP_REMOTE, PORT_REMOTE);  // UDP.remotePort()
     UDP.write(releaseSecMsg);
     Serial.println("sent releaseSecMsg");
     UDP.endPacket();
-
   }
 }
 
