@@ -34,7 +34,9 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
 ### Opis połączenia elementów
 todo
 ### Opis instalacji
-   - uzupełnić plik konfiguracyjny .h
+   - skonfigurować połącznie w sieci lokalnej: 
+      - `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`
+      - uzupełnić WIFI_CONFIG.h odpowiednimi własnymi danymi
    - zainstalować potrzebne biblioteki i menadżer płytek w Arduino IDE
    - wgrać program do mikrokontrolera przy pomocy Arduino IDE
    - zainstalować potrzebne biblioteki python3: `pip install -r requirements.txt`

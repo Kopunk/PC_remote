@@ -4,13 +4,9 @@
 #include <Adafruit_MPU6050.h>
 #include <Wire.h>
 
-#include "WiFi_ssid_pass.h"
+#include "WIFI_CONFIG.h"
 
 #include <string>
-
-#define IP_REMOTE "192.168.1.100"
-#define PORT_LOCAL 2999
-#define PORT_REMOTE 3999
 
 WiFiUDP UDP;
 
