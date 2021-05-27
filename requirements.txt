@@ -1,4 +1,3 @@
 pynput
-socket
-csv
-time
+numpy==1.19.2
+tensorflow
