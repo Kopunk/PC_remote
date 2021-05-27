@@ -49,7 +49,7 @@ class ConnectRemote:
 
         return acc, gyro
 
-    def train(self, repeat: int = 20, chars: list = []):
+    def train_input_train_data(self, repeat: int = 20, chars: list = []):
         if chars == []:
             chars = [chr(i) for i in range(ord("A"), ord("Z")+1)]
 
@@ -68,8 +68,10 @@ class ConnectRemote:
                         data = self.data_receive_decode()
 
     def train_prepare_data(self, sample_data=False):
-        self.train_labels = []
-        self.train = []
+        class_names = []
+        train = []
+        train_labels = []
+
         if sample_data:
             max_line_count = 0
             for c in "ABCD":
@@ -83,15 +85,31 @@ class ConnectRemote:
                         csv_reader = csv.reader(data_file)
                         row_array = [[float(x) for x in row]
                                      for row in csv_reader]
-                    self.train_labels.append(c)
-                    self.train.append(row_array)
-        for i in range(len(self.train)):
-            for j in range(max_line_count - len(self.train[i])):
-                self.train[i].append([0, 0, 0])
-            # print(len(self.train[i]))
-        # print(self.train[-1])
+                    class_names.append(c)
+                    train.append(row_array)
+        for i in range(len(train)):
+            for j in range(max_line_count - len(train[i])):
+                train[i].append([0, 0, 0])
 
-        # return train_labels, train
+        train_labels = [ord(c)-ord('A') for c in class_names]
+
+        train_labels = np.array(train_labels)
+        train = np.array(train)
+        return train_labels, train
+
+    def train_train_from_data(self, train_labels, train):
+        # temp solution to make data ranged < 1
+        train = train / 100
+
+        model = tf.keras.Sequential([
+            tf.keras.layers.Flatten(input_shape=(365, 3)),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(4)
+        ])
+        model.compile(optimizer='adam',
+            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            metrics=['accuracy'])
+        model.fit(train, train_labels, epochs=10)
 
     def cursor(self, mode: str = "gyro"):
         mouse = Controller()
@@ -153,4 +171,5 @@ class ConnectRemote:
 
 if __name__ == "__main__":
     test = ConnectRemote()
-    test.train_prepare_data(True)
+    train_labels, train = test.train_prepare_data(True)
+    test.train_train_from_data(train_labels, train)
