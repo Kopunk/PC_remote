@@ -1,10 +1,13 @@
 #!/bin/python3
 
+from genericpath import exists
 import socket
 import csv
 from time import time, sleep
 import numpy as np
 import tensorflow as tf
+from random import shuffle, randint
+from os import path, listdir, mkdir
 
 
 from pynput.mouse import Controller, Button
@@ -49,57 +52,81 @@ class ConnectRemote:
 
         return acc, gyro
 
-    def train_input_train_data(self, repeat: int = 20, chars: list = []):
+    def input_train_data(self, repeats=20, chars=[], extra_chars=False):
+        """Reads and stores input from user,
+        chars can be an empty list for full alphabet,
+        list for specifying all included characters,
+        tuple for inclusive char range.
+        Space and backspace represented by _ and -"""
         if chars == []:
             chars = [chr(i) for i in range(ord("A"), ord("Z")+1)]
+        else:
+            assert all(type(c) == str and
+                       len(c) == 1 and
+                       chars.count(c) == 1 and
+                       ord(c) >= ord("A") and
+                       ord(c) <= ord("Z") for c in chars), "Invalid char format"
+            if type(chars) == list:
+                pass
+            elif type(chars) == tuple:
+                chars = [chr(i) for i in range(ord(chars[0]), ord(chars[1])+1)]
+            else:
+                raise AssertionError("Invalid chars argument format")
+
+        if extra_chars:
+            chars += ["_", "-"]
+
+        chars = chars * repeats
+        shuffle(chars)
 
         for c in chars:
             print(f"Now reading '{c}' gesture.")
-            for i in range(repeat):
-                with open(f"train_char/{c}{i}.csv", mode="w") as data_file:
-                    data_writer = csv.writer(data_file, delimiter=",")
-                    print(f"{c} {i}")
-
+            rnd_x = randint(0, repeats*2)
+            while(path.exists(f"{c}{rnd_x}")):
+                rnd_x = randint(0, repeats*2)
+            with open(f"train_char/{c}{rnd_x}.csv", mode="w") as data_file:
+                data_writer = csv.writer(data_file, delimiter=",")
+                data = self.data_receive_decode()
+                while data != "main_rel":
+                    if data == "sec_press":
+                        break
+                    data_writer.writerow(data[0])
                     data = self.data_receive_decode()
-                    while data != "main_rel":
-                        if data == "sec_press":
-                            break
-                        data_writer.writerow(data[0])
-                        data = self.data_receive_decode()
 
     def train_prepare_data(self, sample_data=False):
         class_names = []
         train = []
         train_labels = []
 
-        if sample_data:
-            max_line_count = 0
-            for c in "ABCD":
-                for i in range(30):
-                    with open(f"train_char/{c}{i}.csv") as data_file:
-                        csv_reader = csv.reader(data_file)
-                        row_sum = sum(1 for row in csv_reader)
-                        if row_sum > max_line_count:
-                            max_line_count = row_sum
-                    with open(f"train_char/{c}{i}.csv") as data_file:
-                        csv_reader = csv.reader(data_file)
-                        row_array = [[float(x) for x in row]
-                                     for row in csv_reader]
-                    class_names.append(c)
-                    train.append(row_array)
+        if not path.exists("train_char/"):
+            mkdir("train_char")
+
+        max_line_count = 0
+        for file_name in listdir("train_char"):
+            assert file_name.endswith(
+                ".csv"), "Non-CSV files existent in train_char dir"
+            with open(file_name) as data_file:
+                csv_reader = csv.reader(data_file)
+                row_sum = sum(1 for row in csv_reader)
+                if row_sum > max_line_count:
+                    max_line_count = row_sum
+            with open(file_name) as data_file:
+                csv_reader = csv.reader(data_file)
+                row_array = [[float(x) for x in row] for row in csv_reader]
+                class_names.append(file_name[0])
+                train.append(row_array)
         for i in range(len(train)):
-            for j in range(max_line_count - len(train[i])):
+            for _ in range(max_line_count - len(train[i])):
                 train[i].append([0, 0, 0])
 
         train_labels = [ord(c)-ord('A') for c in class_names]
 
         train_labels = np.array(train_labels)
         train = np.array(train)
+        train = train / 100  # make data < 1
         return train_labels, train
 
-    def train_train_from_data(self, train_labels, train):
-        # temp solution to make data ranged < 1
-        train = train / 100
+    def train_from_data(self, train_labels, train):
 
         model = tf.keras.Sequential([
             tf.keras.layers.Flatten(input_shape=(365, 3)),
@@ -107,8 +134,9 @@ class ConnectRemote:
             tf.keras.layers.Dense(4)
         ])
         model.compile(optimizer='adam',
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-            metrics=['accuracy'])
+                      loss=tf.keras.losses.SparseCategoricalCrossentropy(
+                          from_logits=True),
+                      metrics=['accuracy'])
         model.fit(train, train_labels, epochs=10)
 
     def cursor(self, mode: str = "gyro"):
