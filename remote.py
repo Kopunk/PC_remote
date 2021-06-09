@@ -12,6 +12,20 @@ import numpy as np
 import tensorflow as tf
 from pynput.mouse import Controller, Button
 
+from dataclasses import dataclass
+
+@dataclass
+class CharSignal:
+    char: str
+    signal: List[List[float]]
+
+    def set_length(self, new_length):
+        if len(self.signal) > new_length:
+            self.signal = self.signal[:new_length]
+        elif len(self.signal) < new_length:
+            len_diff = new_length-len(self.signal)
+            self.signal += [[.0, .0, .0] for _ in range(len_diff)]
+
 
 class Connection:
     MAIN_RELEASE_MSG = 'end'
