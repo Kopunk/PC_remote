@@ -42,7 +42,9 @@ class SensorConfig:
     accel_treshold: float = .7
     gyro_multiplier: float = 8
     gyro_treshold: float = .1
-    double_click_time: float = .3
+    double_click_time = .3
+    button_hold_time: float = .8
+    hybrid_switch_treshold = 2
 
 
 @dataclass
@@ -82,6 +84,16 @@ class Remote:
     SEC_PRESS_MSG = 'spec'
     SEC_RELEASE_MSG = 'rel'
 
+    COMM_MSG = {
+        'end': 'main_release',
+        'spec': 'secondary_press',
+        'rel': 'secondary_release',
+
+        'main_release': 'end',
+        'secondary_press': 'spec',
+        'secondary_release': 'rel',
+    }
+
     def __init__(self,
                  sensor_config: SensorConfig,
                  conn_config: ConnectionConfig,
@@ -102,6 +114,12 @@ class Remote:
         self.training_sequence = None
         self._model = None
 
+        self.enable_verbose = True
+
+    def _verbose(self, s) -> None:
+        if self.enable_verbose:
+            print(s)
+
     def send_ready_signal(self) -> None:
         self._s.sendto(bytes(1), self.conn_config.remote_addr)
 
@@ -112,7 +130,7 @@ class Remote:
         assert data.startswith(':'), "Unexpected data recieved"
         data = data[1:]
 
-        if data in (self.MAIN_RELEASE_MSG, self.SEC_PRESS_MSG, self.SEC_RELEASE_MSG):
+        if data in self.COMM_MSG.keys():
             return data  # type: str
         else:
             data = data.split(':')
@@ -132,13 +150,71 @@ class Remote:
             data = self.receive_data()
             if type(data) == tuple:
                 data_list.append(data[0])
-            elif data == self.MAIN_RELEASE_MSG:
+            elif data == self.COMM_MSG['main_release']:
                 break
 
         return CharSignal(char, data_list)
 
-    def move_cursor(self) -> None:
-        pass
+    def cursor(self) -> None:
+        """Double click main button to exit cursor.
+        Press and hold secondary button to right click."""
+        mouse = Controller()
+
+        hold_timer = 0
+        double_click_timer = 0
+        data = self.receive_data()
+        while True:
+            if type(data) == str:
+                if self.COMM_MSG[data] == 'secondary_press':
+                    hold_timer = time()
+                    data = self.receive_data()
+                    while data == self.COMM_MSG['secondary_press']:
+                        if time() - hold_timer >= self.sensor_config.button_hold_time:
+                            mouse.click(Button.right)
+                        data = self.receive_data()
+                elif self.COMM_MSG[data] == 'secondary_release':
+                    mouse.click(Button.left)
+                elif self.COMM_MSG[data] == 'main_release':
+                    if time() - double_click_timer < self.sensor_config.double_click_time:
+                        break
+                    double_click_timer = time()
+                continue
+
+            if 'gyro' in self.sensor_config.mode:
+                data = data[1]
+                if abs(data[2]) > self.sensor_config.gyro_treshold:
+                    mouse.move(- int(data[2] *
+                               self.sensor_config.gyro_multiplier), 0)
+                if abs(data[0]) > self.sensor_config.gyro_treshold:
+                    mouse.move(
+                        0, - int(data[0]*self.sensor_config.gyro_multiplier))
+
+            elif 'hybrid' in self.sensor_config.mode:
+                # data = data
+                if abs(data[1][2]) > self.sensor_config.gyro_treshold:
+                    mouse.move(
+                        - int(data[1][2] * self.sensor_config.gyro_multiplier), 0)
+                elif abs(data[0][0]) > self.sensor_config.accel_treshold and \
+                        abs(data[0][0]) < self.sensor_config.hybrid_switch_treshold:
+                    mouse.move(- int(data[0][0]), 0)
+
+                if abs(data[1][0]) > self.sensor_config.gyro_treshold:
+                    mouse.move(
+                        0, - int(data[1][0]*self.sensor_config.gyro_multiplier))
+                elif abs(data[0][1]) > self.sensor_config.accel_treshold and \
+                        abs(data[0][1]) < self.sensor_config.hybrid_switch_treshold:
+                    mouse.move(0, - int(data[0][1]))
+
+            else:  # deafults to mode == accel
+                data = data[0]
+                if abs(data[0]) > self.sensor_config.accel_treshold:
+                    mouse.move(- int(data[0]) *
+                               self.sensor_config.accel_multiplier, 0)
+                if abs(data[1]) > self.sensor_config.accel_treshold:
+                    mouse.move(0, - int(data[1]) *
+                               self.sensor_config.accel_multiplier)
+
+            data = self.receive_data()
 
     def _prepare_char(self, data) -> np.ndarray:
         char_signal = CharSignal('?', data)
@@ -231,22 +307,9 @@ class Remote:
 
 
 def main():
-    conn = Remote()
-    conn.send_ready_signal()
-
-    train = Training()
-    # no_of_chars = train.set_training_char_sequence(
-    #     chars=['A', 'B', 'C', 'D'], include_extra_chars=False)
-
-    # print(f'training sequence: {no_of_chars}')
-
-    # for c in train.training_sequence:
-    #     print(f'reading char: {c}; remaining: {no_of_chars}')
-    #     train.write_to_dataset(conn.receive_char(c))
-    #     no_of_chars -= 1
-
-    train.prepare_training_data()
-    train.train()
+    r = Remote(SensorConfig(), ConnectionConfig(), TrainingConfig())
+    r.send_ready_signal()
+    r.cursor()
 
 
 if __name__ == '__main__':
