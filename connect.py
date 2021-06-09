@@ -103,8 +103,8 @@ class ConnectRemote:
             mkdir("train_char")
 
         max_line_count = 0
-        for file_name in listdir("train_char"):
-            print(file_name)
+        for filename in listdir("train_char"):
+            file_name = "train_char/" + filename
             assert file_name.endswith(
                 ".csv"), "Non-CSV files existent in train_char dir"
             with open(file_name) as data_file:
