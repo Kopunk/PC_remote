@@ -52,7 +52,8 @@ class ConnectRemote:
 
         return acc, gyro
 
-    def input_train_data(self, repeats=20, chars=[], extra_chars=False):
+    def input_train_data(self, repeats=20, chars=[],
+                         extra_chars=False, max_length=400):
         """Reads and stores input from user,
         chars can be an empty list for full alphabet,
         list for specifying all included characters,
@@ -103,6 +104,7 @@ class ConnectRemote:
 
         max_line_count = 0
         for file_name in listdir("train_char"):
+            print(file_name)
             assert file_name.endswith(
                 ".csv"), "Non-CSV files existent in train_char dir"
             with open(file_name) as data_file:
@@ -199,5 +201,7 @@ class ConnectRemote:
 
 if __name__ == "__main__":
     test = ConnectRemote()
-    train_labels, train = test.train_prepare_data(True)
-    test.train_train_from_data(train_labels, train)
+    # train_labels, train = test.train_prepare_data(True)
+    # test.train_train_from_data(train_labels, train)
+    # test.input_train_data()
+    test.train_prepare_data()
