@@ -249,9 +249,10 @@ class Remote:
         probability_model = tf.keras.Sequential([self._model,
                                                  tf.keras.layers.Softmax()])
         # self._verbose(self._prepare_char(data))
-        prediction = probability_model.predict(np.array([self._prepare_char(data)]))
+        prediction = probability_model.predict(
+            np.array([self._prepare_char(data)]))
 
-        return chr(np.argmax(prediction) + ord('A'))
+        return self.available_chars[np.argmax(prediction)]
 
     def set_training_char_sequence(self,
                                    chars: list = None,
@@ -301,15 +302,17 @@ class Remote:
                 char_signal = CharSignal(file_name[0], row_list)
                 char_signal.set_length(self.training_config.max_input_len)
                 data.append(char_signal)
-        self.available_chars = tuple(set(char_signal.char for char_signal in data))
+        self.available_chars = tuple(
+            set(char_signal.char for char_signal in data))
         shuffle(data)
         self._train_labels = []
         self._train_values = []
         for char_signal in data:
-            self._train_labels.append(ord(char_signal.char)-ord('A'))
+            self._train_labels.append(
+                self.available_chars.index(char_signal.char))
             self._train_values.append(char_signal.get_array())
         self._train_labels = np.array(self._train_labels)
-        self._train_values = np.array(self._train_values) # CharSignal('?', self._train_values).get_array()
+        self._train_values = np.array(self._train_values)
         # not divided by 100 to reduce values to < 1
 
         return len(data)
