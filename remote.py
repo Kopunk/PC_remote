@@ -102,11 +102,13 @@ class Remote:
     def __init__(self,
                  sensor_config: SensorConfig,
                  conn_config: ConnectionConfig,
-                 training_config: TrainingConfig) -> None:
+                 training_config: TrainingConfig,
+                 verbose: bool = True) -> None:
 
         self.sensor_config = sensor_config
         self.conn_config = conn_config
         self.training_config = training_config
+        self.enable_verbose = verbose
 
         self._s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._s.bind(self.conn_config.server_addr)
@@ -120,7 +122,6 @@ class Remote:
         self._model = None
 
         self.available_chars: tuple
-        self.enable_verbose = True
 
     def _verbose(self, s) -> None:
         if self.enable_verbose:
@@ -128,6 +129,7 @@ class Remote:
 
     def send_ready_signal(self) -> None:
         self._s.sendto(bytes(1), self.conn_config.remote_addr)
+        self._verbose('send ready signal to remote')
 
     def receive_data(self) -> Union[Tuple[List[float], List[float]], str]:
         data, _ = self._s.recvfrom(256)
@@ -163,10 +165,11 @@ class Remote:
 
         return CharSignal(char, data_list)
 
-    def cursor(self) -> None:
-        """Double click main button to exit cursor.
+    def cursor_mode(self) -> None:
+        """Double click main button to exit cursor_mode.
         Press and hold secondary button to right click."""
         virtual_mouse = MouseController()
+        self._verbose('cursor mode')
 
         hold_timer = 0
         start_hold_timer = True
@@ -180,14 +183,17 @@ class Remote:
                         hold_timer = time()
                         start_hold_timer = False
                     if time() - hold_timer >= self.sensor_config.button_hold_time:
+                        self._verbose('right click')
                         virtual_mouse.click(Button.right)
                         start_hold_timer = True
                         sleep(.8)
                 elif self.COMM_MSG[data] == 'secondary_release':
                     start_hold_timer = True
+                    self._verbose('left click')
                     virtual_mouse.click(Button.left)
                 elif self.COMM_MSG[data] == 'main_release':
                     if time() - double_click_timer < self.sensor_config.double_click_time:
+                        self._verbose('exit cursor mode')
                         break
                     double_click_timer = time()
                 continue
@@ -231,9 +237,10 @@ class Remote:
         self._verbose(f'number of signals in training set: {no_of_data}')
         self.train()
 
-    def keyboard(self) -> None:
+    def keyboard_mode(self) -> None:
         assert self._model is not None, "No model created, try: prepare_keyboard()"
         virtual_keyboard = KeyboardController()
+        self._verbose('keyboard mode')
 
         lower_case = False
         double_click_timer = 0
@@ -251,22 +258,22 @@ class Remote:
                 double_click_timer = 0
                 continue
             if len(char_signal.signal) < 50:  # skip if signal too short
-                self._verbose('skipped short signal')
+                self._verbose('skip short signal')
                 continue
             # self._verbose('processing signal')
             char = self.predict_char(char_signal.signal)
-            self._verbose(f'predicted character: {char}')
+            self._verbose(f'read character: {char}')
             if lower_case:
                 char = str(lower(char))
                 print(char)
             virtual_keyboard.press(char)
             virtual_keyboard.release(char)
 
-    def cursor_keyboard(self) -> None:
+    def cursor_keyboard_mode(self) -> None:
         self.prepare_keyboard()
         while True:
-            self.cursor()
-            self.keyboard()
+            self.cursor_mode()
+            self.keyboard_mode()
 
     def _prepare_char(self, data) -> np.ndarray:
         char_signal = CharSignal('?', data)
@@ -318,6 +325,7 @@ class Remote:
         with open(file_name, mode='w') as data_file:
             data_writer = csv.writer(data_file)
             data_writer.writerows(char_signal.signal)
+            self._verbose(f'save to {file_name}')
 
     def prepare_training_data(self) -> int:
         """Returns number of signal files processed.
@@ -343,6 +351,7 @@ class Remote:
         self._train_labels = np.array(self._train_labels)
         self._train_values = np.array(self._train_values)
         # not divided by 100 to reduce values to < 1
+        self._verbose(f'prepare training data of {len(data)}')
 
         return len(data)
 
@@ -363,12 +372,16 @@ class Remote:
                                 from_logits=True),
                             metrics=['accuracy'])
         self._model.fit(self._train_values, self._train_labels, epochs=10)
+        self._verbose('train model')
+
+    def train_mode(self) -> None:
+        pass
 
 
 def main():
     r = Remote(SensorConfig(), ConnectionConfig(), TrainingConfig())
     r.send_ready_signal()
-    r.cursor_keyboard()
+    r.cursor_keyboard_mode()
 
 
 if __name__ == '__main__':
