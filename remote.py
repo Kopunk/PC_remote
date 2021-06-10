@@ -9,7 +9,7 @@ from os import path, listdir, mkdir
 from typing import Union, List, Tuple
 
 import numpy as np
-from numpy.core.defchararray import array
+from numpy.core.defchararray import array, lower
 import tensorflow as tf
 from tensorflow.python.distribute import parameter_server_strategy
 
@@ -32,7 +32,6 @@ class CharSignal:
             self.signal = self.signal[:new_length]
         elif len(self.signal) < new_length:
             len_diff = new_length-len(self.signal)
-            print(type(self.signal))
             self.signal += [[.0, .0, .0] for _ in range(len_diff)]
 
     def get_array(self) -> np.ndarray:
@@ -125,7 +124,7 @@ class Remote:
 
     def _verbose(self, s) -> None:
         if self.enable_verbose:
-            print(s)
+            print(f'@ {s}')
 
     def send_ready_signal(self) -> None:
         self._s.sendto(bytes(1), self.conn_config.remote_addr)
@@ -145,7 +144,7 @@ class Remote:
             acc, gyro = data[:3], data[3:]
             return acc, gyro  # type: tuple of lists
 
-    def receive_char(self, char: str) -> CharSignal:
+    def receive_char(self, char: str) -> Union[CharSignal, str]:
         accepted_chars = ['-', '_', '?']
         accepted_chars += [chr(i) for i in range(ord('A'), ord('Z')+1)]
 
@@ -159,6 +158,8 @@ class Remote:
                 data_list.append(data[0])
             elif data == self.COMM_MSG['main_release']:
                 break
+            else:  # if secondary button is pressed or released return its signal
+                return data
 
         return CharSignal(char, data_list)
 
@@ -225,18 +226,47 @@ class Remote:
                     virtual_mouse.move(0, - int(data[1]) *
                                        self.sensor_config.accel_multiplier)
 
-    def keyboard(self) -> None:
-        virtual_keyboard = KeyboardController()
+    def prepare_keyboard(self) -> None:
         no_of_data = self.prepare_training_data()
         self._verbose(f'number of signals in training set: {no_of_data}')
         self.train()
 
-        char_signal = self.receive_char('?')
-        self._verbose('received signal')
-        char = self.predict_char(char_signal.signal)  # BAC
-        self._verbose(f'predicted character: {char}')
-        virtual_keyboard.press(char)
-        virtual_keyboard.release(char)
+    def keyboard(self) -> None:
+        assert self._model is not None, "No model created, try: prepare_keyboard()"
+        virtual_keyboard = KeyboardController()
+
+        lower_case = False
+        double_click_timer = 0
+
+        while True:
+            char_signal = self.receive_char('?')
+            if time() - double_click_timer <= self.sensor_config.double_click_time:
+                self._verbose('exit keyboard mode')
+                break
+            double_click_timer = time()
+            if type(char_signal) == str and char_signal in self.COMM_MSG.keys():
+                if self.COMM_MSG[char_signal] == 'secondary_release':
+                    self._verbose('switch caps lock')
+                    lower_case = not lower_case  # switch lower / upper
+                double_click_timer = 0
+                continue
+            if len(char_signal.signal) < 50:  # skip if signal too short
+                self._verbose('skipped short signal')
+                continue
+            # self._verbose('processing signal')
+            char = self.predict_char(char_signal.signal)
+            self._verbose(f'predicted character: {char}')
+            if lower_case:
+                char = str(lower(char))
+                print(char)
+            virtual_keyboard.press(char)
+            virtual_keyboard.release(char)
+
+    def cursor_keyboard(self) -> None:
+        self.prepare_keyboard()
+        while True:
+            self.cursor()
+            self.keyboard()
 
     def _prepare_char(self, data) -> np.ndarray:
         char_signal = CharSignal('?', data)
@@ -317,8 +347,10 @@ class Remote:
         return len(data)
 
     def train(self) -> None:
-        assert type(self._train_values) == np.ndarray
-        assert type(self._train_labels) == np.ndarray
+        assert type(
+            self._train_values) == np.ndarray, "try: prepare_training_data()"
+        assert type(
+            self._train_labels) == np.ndarray, "try: prepare_training_data()"
 
         self._model = tf.keras.Sequential([
             tf.keras.layers.Flatten(input_shape=(
@@ -336,7 +368,7 @@ class Remote:
 def main():
     r = Remote(SensorConfig(), ConnectionConfig(), TrainingConfig())
     r.send_ready_signal()
-    r.keyboard()
+    r.cursor_keyboard()
 
 
 if __name__ == '__main__':
