@@ -1,6 +1,5 @@
 #!/bin/python3
 
-from connect import ConnectRemote
 from time import time, sleep
 from random import shuffle
 
