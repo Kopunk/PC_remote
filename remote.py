@@ -71,9 +71,9 @@ class ConnectionConfig:
 @dataclass
 class TrainingConfig:
     max_input_len: int = 400
-    _training_data_path: str = 'train_char/'
+    _training_data_path: str = 'train_char/'  # to do: fix this
 
-    @property
+    @property  # fix this as working property with setter for data class
     def training_data_path(self):
         return self._training_data_path
 
@@ -262,12 +262,20 @@ class Remote:
                 continue
             # self._verbose('processing signal')
             char = self.predict_char(char_signal.signal)
-            self._verbose(f'read character: {char}')
-            if lower_case:
-                char = str(lower(char))
-                print(char)
-            virtual_keyboard.press(char)
-            virtual_keyboard.release(char)
+            if char == '-':
+                self._verbose(f'read backspace')
+                virtual_keyboard.press(Key.backspace)
+                virtual_keyboard.release(Key.backspace)
+            elif char == '_':
+                self._verbose(f'read space')
+                virtual_keyboard.press(Key.space)
+                virtual_keyboard.release(Key.space)
+            else:
+                self._verbose(f'read character: {char}')
+                if lower_case:
+                    char = str(lower(char))
+                virtual_keyboard.press(char)
+                virtual_keyboard.release(char)
 
     def cursor_keyboard_mode(self) -> None:
         self.prepare_keyboard()
@@ -365,7 +373,7 @@ class Remote:
             tf.keras.layers.Flatten(input_shape=(
                 self.training_config.max_input_len, 3)),
             tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(4)
+            tf.keras.layers.Dense(len(self.available_chars))
         ])
         self._model.compile(optimizer='adam',
                             loss=tf.keras.losses.SparseCategoricalCrossentropy(
@@ -382,7 +390,12 @@ class Remote:
         char_no = self.set_training_char_sequence(char_sequence, repeats,
                                                   shuffle_chars, include_extra_chars)
         for char in self.training_sequence:
-            self._verbose(f'write: {char}; remaining: {char_no}')
+            if char == '-':
+                self._verbose(f'backspace (swipe left); remaining: {char_no}')
+            elif char == '_':
+                self._verbose(f'space (swipe right); remaining: {char_no}')
+            else:
+                self._verbose(f'write: {char}; remaining: {char_no}')
             while True:
                 char_signal = self.receive_char(char)
                 if isinstance(char_signal, CharSignal):
@@ -398,6 +411,8 @@ def main():
     r = Remote(SensorConfig(), ConnectionConfig(), TrainingConfig())
     r.send_ready_signal()
     r.cursor_keyboard_mode()
+
+    # r.train_mode(char_sequence=[], repeats=20)  # to train space and backspace
 
 
 if __name__ == '__main__':
