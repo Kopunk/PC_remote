@@ -374,8 +374,24 @@ class Remote:
         self._model.fit(self._train_values, self._train_labels, epochs=10)
         self._verbose('train model')
 
-    def train_mode(self) -> None:
-        pass
+    def train_mode(self,
+                   char_sequence: list = None,
+                   repeats: int = 40,
+                   shuffle_chars: bool = False,
+                   include_extra_chars: bool = True) -> None:
+        char_no = self.set_training_char_sequence(char_sequence, repeats,
+                                                  shuffle_chars, include_extra_chars)
+        for char in self.training_sequence:
+            self._verbose(f'write: {char}; remaining: {char_no}')
+            while True:
+                char_signal = self.receive_char(char)
+                if isinstance(char_signal, CharSignal):
+                    break
+                self._verbose('ERROR: try again')
+            char_no -= 1
+            self.write_to_dataset(char_signal)
+            self._verbose
+        self._verbose('finished')
 
 
 def main():
