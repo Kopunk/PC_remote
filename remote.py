@@ -1,7 +1,7 @@
 #!/bin/python3
 
 from connect import ConnectRemote
-from time import time
+from time import time, sleep
 from random import shuffle
 
 import socket
@@ -13,7 +13,11 @@ import numpy as np
 from numpy.core.defchararray import array
 import tensorflow as tf
 from tensorflow.python.distribute import parameter_server_strategy
-from pynput.mouse import Controller, Button
+
+from pynput.mouse import Controller as MouseController
+from pynput.mouse import Button
+from pynput.keyboard import Controller as KeyboardController
+from pynput.keyboard import Key
 
 from dataclasses import dataclass
 
@@ -29,10 +33,13 @@ class CharSignal:
             self.signal = self.signal[:new_length]
         elif len(self.signal) < new_length:
             len_diff = new_length-len(self.signal)
+            print(type(self.signal))
             self.signal += [[.0, .0, .0] for _ in range(len_diff)]
 
     def get_array(self) -> np.ndarray:
-        return np.array(self.signal)
+        ret_array = np.array(self.signal)
+        # ret_array = np.ravel(ret_array)  # not necessary
+        return ret_array
 
 
 @dataclass
@@ -43,7 +50,7 @@ class SensorConfig:
     gyro_multiplier: float = 8
     gyro_treshold: float = .1
     double_click_time = .3
-    button_hold_time: float = .8
+    button_hold_time: float = .3
     hybrid_switch_treshold = 2
 
 
@@ -114,6 +121,7 @@ class Remote:
         self.training_sequence = None
         self._model = None
 
+        self.available_chars: tuple
         self.enable_verbose = True
 
     def _verbose(self, s) -> None:
@@ -158,26 +166,26 @@ class Remote:
     def cursor(self) -> None:
         """Double click main button to exit cursor.
         Press and hold secondary button to right click."""
-        mouse = Controller()
+        virtual_mouse = MouseController()
 
         hold_timer = 0
+        start_hold_timer = True
         double_click_timer = 0
         data = self.receive_data()
         while True:
             data = self.receive_data()
             if type(data) == str:
                 if self.COMM_MSG[data] == 'secondary_press':
-                    hold_timer = time()
-                    data = self.receive_data()
-                    while self.COMM_MSG[data] == 'secondary_press':
-                        if time() - hold_timer >= self.sensor_config.button_hold_time:
-                            mouse.click(Button.right)
-                            break
-                    else:
-                        mouse.click(Button.left)
-                        self.receive_data()
+                    if start_hold_timer:
+                        hold_timer = time()
+                        start_hold_timer = False
+                    if time() - hold_timer >= self.sensor_config.button_hold_time:
+                        virtual_mouse.click(Button.right)
+                        start_hold_timer = True
+                        sleep(.8)
                 elif self.COMM_MSG[data] == 'secondary_release':
-                    mouse.click(Button.left)
+                    start_hold_timer = True
+                    virtual_mouse.click(Button.left)
                 elif self.COMM_MSG[data] == 'main_release':
                     if time() - double_click_timer < self.sensor_config.double_click_time:
                         break
@@ -187,36 +195,49 @@ class Remote:
             if 'gyro' in self.sensor_config.mode:
                 data = data[1]
                 if abs(data[2]) > self.sensor_config.gyro_treshold:
-                    mouse.move(- int(data[2] *
-                               self.sensor_config.gyro_multiplier), 0)
+                    virtual_mouse.move(- int(data[2] *
+                                             self.sensor_config.gyro_multiplier), 0)
                 if abs(data[0]) > self.sensor_config.gyro_treshold:
-                    mouse.move(
+                    virtual_mouse.move(
                         0, - int(data[0]*self.sensor_config.gyro_multiplier))
 
             elif 'hybrid' in self.sensor_config.mode:
                 # data = data
                 if abs(data[1][2]) > self.sensor_config.gyro_treshold:
-                    mouse.move(
+                    virtual_mouse.move(
                         - int(data[1][2] * self.sensor_config.gyro_multiplier), 0)
                 elif abs(data[0][0]) > self.sensor_config.accel_treshold and \
                         abs(data[0][0]) < self.sensor_config.hybrid_switch_treshold:
-                    mouse.move(- int(data[0][0]), 0)
+                    virtual_mouse.move(- int(data[0][0]), 0)
 
                 if abs(data[1][0]) > self.sensor_config.gyro_treshold:
-                    mouse.move(
+                    virtual_mouse.move(
                         0, - int(data[1][0]*self.sensor_config.gyro_multiplier))
                 elif abs(data[0][1]) > self.sensor_config.accel_treshold and \
                         abs(data[0][1]) < self.sensor_config.hybrid_switch_treshold:
-                    mouse.move(0, - int(data[0][1]))
+                    virtual_mouse.move(0, - int(data[0][1]))
 
             else:  # deafults to mode == accel
                 data = data[0]
                 if abs(data[0]) > self.sensor_config.accel_treshold:
-                    mouse.move(- int(data[0]) *
-                               self.sensor_config.accel_multiplier, 0)
+                    virtual_mouse.move(- int(data[0]) *
+                                       self.sensor_config.accel_multiplier, 0)
                 if abs(data[1]) > self.sensor_config.accel_treshold:
-                    mouse.move(0, - int(data[1]) *
-                               self.sensor_config.accel_multiplier)
+                    virtual_mouse.move(0, - int(data[1]) *
+                                       self.sensor_config.accel_multiplier)
+
+    def keyboard(self) -> None:
+        virtual_keyboard = KeyboardController()
+        no_of_data = self.prepare_training_data()
+        self._verbose(f'number of signals in training set: {no_of_data}')
+        self.train()
+
+        char_signal = self.receive_char('?')
+        self._verbose('received signal')
+        char = self.predict_char(char_signal.signal)  # BAC
+        self._verbose(f'predicted character: {char}')
+        virtual_keyboard.press(char)
+        virtual_keyboard.release(char)
 
     def _prepare_char(self, data) -> np.ndarray:
         char_signal = CharSignal('?', data)
@@ -227,9 +248,10 @@ class Remote:
         assert self._model is not None, "No model created"
         probability_model = tf.keras.Sequential([self._model,
                                                  tf.keras.layers.Softmax()])
-        predictions = probability_model.predict(self._prepare_char(data))
+        # self._verbose(self._prepare_char(data))
+        prediction = probability_model.predict(np.array([self._prepare_char(data)]))
 
-        return chr(np.argmax(predictions[0]) + ord('A'))
+        return chr(np.argmax(prediction) + ord('A'))
 
     def set_training_char_sequence(self,
                                    chars: list = None,
@@ -279,14 +301,15 @@ class Remote:
                 char_signal = CharSignal(file_name[0], row_list)
                 char_signal.set_length(self.training_config.max_input_len)
                 data.append(char_signal)
+        self.available_chars = tuple(set(char_signal.char for char_signal in data))
         shuffle(data)
         self._train_labels = []
         self._train_values = []
         for char_signal in data:
             self._train_labels.append(ord(char_signal.char)-ord('A'))
-            self._train_values.append(char_signal.signal)
+            self._train_values.append(char_signal.get_array())
         self._train_labels = np.array(self._train_labels)
-        self._train_values = np.array(self._train_values)
+        self._train_values = np.array(self._train_values) # CharSignal('?', self._train_values).get_array()
         # not divided by 100 to reduce values to < 1
 
         return len(data)
@@ -311,7 +334,7 @@ class Remote:
 def main():
     r = Remote(SensorConfig(), ConnectionConfig(), TrainingConfig())
     r.send_ready_signal()
-    r.cursor()
+    r.keyboard()
 
 
 if __name__ == '__main__':
