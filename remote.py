@@ -164,14 +164,18 @@ class Remote:
         double_click_timer = 0
         data = self.receive_data()
         while True:
+            data = self.receive_data()
             if type(data) == str:
                 if self.COMM_MSG[data] == 'secondary_press':
                     hold_timer = time()
                     data = self.receive_data()
-                    while data == self.COMM_MSG['secondary_press']:
+                    while self.COMM_MSG[data] == 'secondary_press':
                         if time() - hold_timer >= self.sensor_config.button_hold_time:
                             mouse.click(Button.right)
-                        data = self.receive_data()
+                            break
+                    else:
+                        mouse.click(Button.left)
+                        self.receive_data()
                 elif self.COMM_MSG[data] == 'secondary_release':
                     mouse.click(Button.left)
                 elif self.COMM_MSG[data] == 'main_release':
@@ -213,8 +217,6 @@ class Remote:
                 if abs(data[1]) > self.sensor_config.accel_treshold:
                     mouse.move(0, - int(data[1]) *
                                self.sensor_config.accel_multiplier)
-
-            data = self.receive_data()
 
     def _prepare_char(self, data) -> np.ndarray:
         char_signal = CharSignal('?', data)
