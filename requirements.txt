@@ -1,3 +1,4 @@
-pynput
 numpy==1.19.2
-tensorflow
+pynput==1.7.3
+tensorflow==2.5.0
+dataclasses==0.8
