@@ -2,13 +2,13 @@
 Accelerometer / gyroscope - based PC cursor controller & gesture character input - a university project. <br>
 The following documentation is written in polish as it will be taken under grading.
 
-# Założenia Projektu
+## Cel projektu
 Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - kontrola kursora za pośrednictwem sensorów ruchu, obsługa lewego i prawego przycisku myszki
    - dodatkowo - kontrola wejścia klawiatury - zapisywanie pojedynczych znaków gestami, obsługa spacji oraz backspace, przełączanie klawisza caps lock
 
-# Technologie Wymagane do Działania
-### Wymagane Urządzenia
+## BOM (Bill of Materials) - wykorzystane elementy
+### Hardware
 1. Wemos D1 mini v2 (ESP8266)
 2. MPU6050
 3. Dodatkowe elementy:
@@ -17,7 +17,7 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - 2x rezystor 10k
    - dioda schottky 20V 2A lub podobna
    - płytka stykowa i przewody
-### Wymagane Programy
+### Software
 1. Arduino IDE 1.8+ z zainstalowanymi bibliotekami:
    - ESP8266WiFi
    - Adafruit_MPU6050
@@ -27,7 +27,41 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
       -  instalacja esp8266 by ESP8266 Community
 2. Python 3.8+ z bibliotekami:
    - patrz: requirements.txt
-3. Zawartość repozytorium
+
+## Schemat ideowy układu
+![schemat ideowy](https://drive.google.com/uc?export=view&id=18EAJDH0eFiJiyNu5_lGT1Exfb5PC0sI4)
+
+## Listing programu
+### Opis klasy Remote
+Klasa Remote zawiera metody pozwalające na łączność z urządzeniem, sterowanie ruchami kursora, naciskanie przycisków myszki oraz klawiatury, łatwe tworzenie zbiorów sygnałów akcelerometru odpowiadających znakom A-Z, spacja i backspace, uczenie maszynowe ze zbiorów sygnałów przy pomocy TensorFlow oraz metody pomocnicze. Opis możliwego użytku klasy:
+   - Inicjalizowana z instancjami klas SensorConfig, ConnectionConfig, TrainingConfig (przechowujące odpowiednio konfiguracje reakcji na sygnały urządzenia; połaczenia przez WiFi; położenie danych treningowych i maksymalna długość sygnału znaku).
+   - Wysłanie sygnału gotowości programu.
+   - Tryb kursora:
+      - poruszanie kursorem przy pomocy odczytów z akcelerometru, żyroskopu lub połączenia sygnałów obu przy przytrzymaniu przycisku Main
+      - kliknięcie lewym przyciskiem myszki poprzez przycisk Sec
+      - kliknięcie prawym przyciskiem myszki poprzez przytrzymanie przycisku Sec
+      - wyjście poprzez podwójne kliknięcie (zwolnienie) przycisku Main
+   - Tryb klawiatury:
+      - wprowadzenie znaku poprzez przytrzymanie przycisku Main i wykonanie gestu urządzeniem (zależne od zbioru treningowego - można wprowadzić tylko kilka znaków)
+      - wprowadzenie spacji lub usunięcie znaku przed kursorem (backspace) (podobnie jak powyżej)
+      - przełączenie przycisku caps lock poprzez naciśnięcie przycisku Sec
+      - wyjście poprzez podwójne kliknięcie (zwolnienie) przycisku Main
+   - Tryb kursora i klawiatury:
+      - przełączanie pomiędzy trybem kursora i klawiatury przy wyjściu z danego trybu
+   - Tryb szkolenia:
+      - ustalenie sekwencji znaków do wprowadzania i lokalizacji plików sygnałów do późniejszego szkolenia
+      - odczytywanie plików .csv z zapisanymi sygnałami (format nazwy pliku: ZnakNumer.csv - A12.csv, \_3.csv, X0.csv, \-10.csv)
+      - uczenie ze zbioru sygnałów treningowych
+
+## Opis działania
+
+## Wnioski
+
+## Załączniki
+
+# ---TMP---
+
+
 ### Opis połączenia elementów
 Połączenie z opisywanego elementu ➡️ cel. Cel "+" i "-" ozn. połączenie zasilania i masy na płytce stykowej.
  - Wemos D1 mini
