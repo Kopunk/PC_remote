@@ -4,8 +4,8 @@ The following documentation is written in polish as it will be taken under gradi
 
 ## Cel projektu
 Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
-   - kontrola kursora za pośrednictwem sensorów ruchu, obsługa lewego i prawego przycisku myszki
-   - dodatkowo - kontrola wejścia klawiatury - zapisywanie pojedynczych znaków gestami, obsługa spacji oraz backspace, przełączanie klawisza caps lock
+   - Kontrola kursora za pośrednictwem sensorów ruchu, obsługa lewego i prawego przycisku myszki.
+   - Dodatkowo: kontrola wejścia klawiatury - zapisywanie pojedynczych znaków gestami, obsługa spacji oraz backspace, przełączanie klawisza caps lock.
 
 ## BOM (Bill of Materials) - wykorzystane elementy
 ### Hardware
@@ -25,13 +25,42 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - Obsługa ESP8266: 
       - dodanie ścieżki http://arduino.esp8266.com/stable/package_esp8266com_index.json w IDE: Preferences > Additional boards manager URLs
       -  instalacja esp8266 by ESP8266 Community
-2. Python 3.8+ z bibliotekami:
-   - patrz: requirements.txt
+2. Python 3.8+ z bibliotekami ([zgodnie z requirements.txt](./requirements.txt)):
+   - numpy 1.19.2
+   - pynput 1.7.3
+   - tensorflow 2.5.0
+   - dataclasses 0.8
 
 ## Schemat ideowy układu
 ![schemat ideowy](https://drive.google.com/uc?export=view&id=18EAJDH0eFiJiyNu5_lGT1Exfb5PC0sI4)
+### Opis połączeń, "+" i "-" ozn. połączenie zasilania i masy na płytce stykowej.
+Od | Do
+-- | --
+Wemos D1 mini: 3v3 | +
+Wemos D1 mini: G | -
+Wemos D1 mini: D1 | MPU6050: SCL
+Wemos D1 mini: D2 | MPU6050: SDA
+Wemos D1 mini: D3 | przycisk Main: a
+Wemos D1 mini: D4 | przycisk Sec: a
+dioda schottky: + | baterie: +
+dioda schottky: - | +
+baterie: - | -
+przycisk Main: b | rezystor 1
+przycisk Main: b | -
+przycisk Sec: b | rezystor 2
+przycisk Sec: b | -
+rezystor 1 | +
+rezystor 2 | +
 
 ## Listing programu
+### [3d_remote.ino](./blob/v2.0/3d_remote.ino)
+### [sample_WIFI_CONFIG.h](./blob/v2.0/sample_WIFI_CONFIG.h)
+### [remote.py](./blob/v2.0/remote.py)
+### [training_example.py](./blob/v2.0/training_example.py)
+### [requirements.txt](./blob/v2.0/requirements.txt)
+### (Dodatkowo) katalog train_char wraz z zawartością
+### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/v2.0/README.md)
+
 ### Opis klasy Remote
 Klasa Remote zawiera metody pozwalające na łączność z urządzeniem, sterowanie ruchami kursora, naciskanie przycisków myszki oraz klawiatury, łatwe tworzenie zbiorów sygnałów akcelerometru odpowiadających znakom A-Z, spacja i backspace, uczenie maszynowe ze zbiorów sygnałów przy pomocy TensorFlow oraz metody pomocnicze. Opis możliwego użytku klasy:
    - Inicjalizowana z instancjami klas SensorConfig, ConnectionConfig, TrainingConfig (przechowujące odpowiednio konfiguracje reakcji na sygnały urządzenia; połaczenia przez WiFi; położenie danych treningowych i maksymalna długość sygnału znaku).
@@ -61,27 +90,6 @@ Klasa Remote zawiera metody pozwalające na łączność z urządzeniem, sterowa
 
 # ---TMP---
 
-
-### Opis połączenia elementów
-Połączenie z opisywanego elementu ➡️ cel. Cel "+" i "-" ozn. połączenie zasilania i masy na płytce stykowej.
- - Wemos D1 mini
-    - 3v3 ➡️ +
-    - G ➡️ -
-    - D1 ➡️ MPU6050: SCL
-    - D2 ➡️ MPU6050: SDA
-    - D3 ➡️ przycisk Main a
-    - D4 ➡️ przycisk Sec a
- - schottky
-    - \+ ➡️ baterie: +
-    - \- ➡️ +
- - baterie
-    - \- ➡️ -
- - przycisk Main
-    - a ➡️ rezystor ➡️ +
-    - b ➡️ -
- - przycisk Main
-    - a ➡️ rezystor ➡️ +
-    - b ➡️ -
 ### Opis instalacji
    - skonfigurować połączenie w sieci lokalnej: 
       - `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`
