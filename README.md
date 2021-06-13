@@ -53,15 +53,15 @@ rezystor 1 | +
 rezystor 2 | +
 
 ## Listing programu
-### [3d_remote.ino](../blob/v2.0/3d_remote.ino)
+### [3d_remote.ino](../v2.0/3d_remote.ino)
 Program działający na urządzeniu.
 
-### [sample_WIFI_CONFIG.h](../blob/v2.0/sample_WIFI_CONFIG.h)
+### [sample_WIFI_CONFIG.h](../v2.0/sample_WIFI_CONFIG.h)
 Plik nagłówkowy dla `3d_remote.ino`, zawiera konfigurację połączenia bezprzewodowej sieci lokalnej: SSID, hasło, adres IP PC, port sieciowy urządzenia, port sieciowy PC. By wykonać konfigurację należy:
- - skopiować go pod nową nazwą`cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`;
+ - skopiować go pod nową nazwą`WIFI_CONFIG.h`: `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`;
  - uzupełnić `WIFI_CONFIG.h` odpowiednimi własnymi danymi;
 
-### [remote.py](../blob/v2.0/remote.py)
+### [remote.py](../v2.0/remote.py)
 #### Klasa CharSignal
 Reprezentuje odczyt sygnału znaku w postaci zapisu odczytów akcelerometru wykonanego gestu znaku i pola znaku.
  - Pola:
@@ -130,9 +130,9 @@ Główna klasa pliku, zawiera wszystkie funkcje projektu ze strony PC.
 #### funkcja `main()`
 W przypadku uruchomienia pliku `remote.py` program tworzy obiekt Remote ze standardową konfiguracją, wywołuje `send_ready_signal()` a następnie `cursor_keyboard_mode()`.
 
-### [training_example.py](../blob/v2.0/training_example.py)
+### [training_example.py](../v2.0/training_example.py)
 
-### [requirements.txt](../blob/v2.0/requirements.txt)
+### [requirements.txt](../v2.0/requirements.txt)
 
 ### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/v2.0/README.md)
 
