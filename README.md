@@ -201,4 +201,5 @@ W przypadku korzystania z trybu uczenia w oknie terminala wyświetlają się zna
 Cel projektu został w pełni osiągnięty. Udało się stworzyć nie tylko narzędzie zdalnej kontroli kursora, ale również "wirtualnej klawiatury". Kontrola kursora oraz wprowadzania znaków są wystarczająco dokładne by dało się praktycznie wykorzystywać projekt. Ze strony technicznej najwięcej trudności sprawiło zastosowanie bublioteki TensorFlow ze względu na stosunkowo małe doświadczenie z uczeniem maszynowym. Klasa Remote wraz z klasami pomocniczymi jest prosta do wykorzystania w osobnych programach (jak pokazano w [training_example.py](https://github.com/Kopunk/PC_remote/blob/v2.0/training_example.py)) i pozwala wykorzystywać urządzenie na kilka sposobów.
 
 ## Załączniki
-
+Sugerowane gesty znaków.
+[sugerowane_gesty](https://drive.google.com/uc?export=view&id=1FwnL8YpVa5-TRB1pyMRQlvhpdVhatzw7)
