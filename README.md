@@ -25,7 +25,7 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - Obsługa ESP8266: 
       - dodanie ścieżki http://arduino.esp8266.com/stable/package_esp8266com_index.json w IDE: Preferences > Additional boards manager URLs
       - instalacja esp8266 by ESP8266 Community
-2. Python 3.8+ z bibliotekami ([zgodnie z requirements.txt](https://github.com/Kopunk/PC_remote/blob/requirements.txt)):
+2. Python 3.8+ z bibliotekami ([zgodnie z requirements.txt](https://github.com/Kopunk/PC_remote/blob/v2.0/requirements.txt)):
    - numpy 1.19.2
    - pynput 1.7.3
    - tensorflow 2.5.0
@@ -167,7 +167,7 @@ Program mający na celu wykorzystanie komponentów remote.py w celu zebrania syg
 ### [requirements.txt](https://github.com/Kopunk/PC_remote/blob/v2.0/requirements.txt)
 Plik zawierający wymagające instalacji nazwy bibliotek python3 wraz z wersjami. Instalacja: `pip install -r requirements.txt`.
 
-### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/v2.1/README.md)
+### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/main/README.md)
 
 ## Opis działania
 ### Instalacja
@@ -201,5 +201,8 @@ W przypadku korzystania z trybu uczenia w oknie terminala wyświetlają się zna
 Cel projektu został w pełni osiągnięty. Udało się stworzyć nie tylko narzędzie zdalnej kontroli kursora, ale również "wirtualnej klawiatury". Kontrola kursora oraz wprowadzania znaków są wystarczająco dokładne by dało się praktycznie wykorzystywać projekt. Ze strony technicznej najwięcej trudności sprawiło zastosowanie bublioteki TensorFlow ze względu na stosunkowo małe doświadczenie z uczeniem maszynowym. Klasa Remote wraz z klasami pomocniczymi jest prosta do wykorzystania w osobnych programach (jak pokazano w [training_example.py](https://github.com/Kopunk/PC_remote/blob/v2.0/training_example.py)) i pozwala wykorzystywać urządzenie na kilka sposobów.
 
 ## Załączniki
-Sugerowane gesty znaków.
+Sugerowane gesty znaków:
 [sugerowane_gesty](https://drive.google.com/uc?export=view&id=1FwnL8YpVa5-TRB1pyMRQlvhpdVhatzw7)
+
+Film obrazujący użytkowanie:
+[film_uzytkowanie](https://drive.google.com/file/d/14lpnJB45p0-D-ETuGvCGRBzyZirtu-Hk/view?usp=sharing)
