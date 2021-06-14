@@ -31,7 +31,7 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - tensorflow 2.5.0
    - dataclasses 0.8
 
-## Schemat ideowy układu
+## Schemat ideowy układu - "urządzenia"
 ![schemat ideowy](https://drive.google.com/uc?export=view&id=18EAJDH0eFiJiyNu5_lGT1Exfb5PC0sI4)
 ### Opis połączeń, "+" i "-" ozn. połączenie zasilania i masy na płytce stykowej.
 Od | Do
@@ -54,7 +54,38 @@ rezystor 2 | +
 
 ## Listing programu
 ### [3d_remote.ino](../v2.0/3d_remote.ino)
-Program działający na urządzeniu.
+Program działający na urządzeniu. Wymaga pliku nagłówkowego WIFI_CONFIG.h.
+ - Stałe:
+   - `int buttonPinMain` - numer pinu połączenia przycisku Main;
+   - `int buttonPinSec` - numer pinu połączenia przycisku Sec;
+   - `char endMsg[]` - wiadomość zwolnienia przycisku Main;
+   - `char pressSecMsg[]` - wiadomość naciśnięcia przycisku Sec;
+   - `char releaseSecMsg[]` - wiadomość zwolnienia przycisku Sec;
+- Zmienne globalne:
+   - `WiFiUDP UDP` - obiekt klasy komunikacji przez UDP;
+   - `Adafruit_MPU6050 MPU` - obiekt klasy obsługującej sensor MPU6050;
+   - `sensors_event_t acc, gyro, temp` - obiekty reprezentujące odczyty akcelerometru, żyroskopu, czujnika temperatury;
+   - `float sensors[7]` - tablica odczytów kolejno akcelerometru (3), żyroksopu (3), temperatury (1);
+   - `bool buttonPressedMain = false` - zmienna przechowująca obecny stan przycisku Main;
+   - `bool buttonPressedSec = false` - zmienna przechowująca obecny stan przycisku Sec;
+- Funkcje:
+   - `buttonHold(buttonPinMain)` - zwraca `true` jeśli przycisk `buttonPinMain` (argument) jest wciśnięty, w przeciwnym wypadku `false`;
+   - `setup()`:
+      - inicjalizuje połączenie szeregowe USB dla możliwości podglądu komunikatów w monitorze szeregowym Arduino IDE;
+      - inicjalizuje buttonPinMain oraz buttonPinSec jako wejścia cyfrowe;
+      - inicjalizuje obiekt urządzenia MPU6050;
+      - inicjalizuje połączenie z WiFi;
+      - wypisuje (w przypadku połączenia monitora szeregowego) przypisany adres IP urządzenia;
+      - inicjalizuje komunikację UDP na zadanym porcie;
+      - oczekuje "sygnału gotowości" ze strony PC (patrz: remote.py send_ready_signal());
+      - po otrzymaniu sygnału kontynuuje do funkcji `loop()`;
+   - `loop()`:
+      - zbiera odczyty sensorów MPU do tablicy `sensors`;
+      - tworzy obiekt `msg` typu String, konwertuje na ciągi znaków pierwsze 6 pól `sensors` (bez temperatury) i dodaje do `msg` oddzielając wartości dwukropkami;
+      - w przypadku naciśnięcia przycisku Main wysyła przez UDP przygotowany String `msg`, ustawia wartość `buttonPressedMain` na `true`;
+      - w przeciwnym wypadku jeśli `buttonPressedMain` ma wartość `true`, ustawia ją na `false` i wysyła wiadomość zwolnienia przycisku Main przez UDP;
+      - w przypadku naciśnięcia przycisku Sec wysyła wiadomość naciśnięcia przycisku Sec przez UDP i ustawia wartość `buttonPressedSec` na `true`;
+      -  w przeciwnym wypadku jeśli `buttonPressedSec` ma wartość `true`, ustawia ją na `false` i wysyła wiadomość zwolnienia przycisku Sec przez UDP;
 
 ### [sample_WIFI_CONFIG.h](../v2.0/sample_WIFI_CONFIG.h)
 Plik nagłówkowy dla 3d_remote.ino, zawiera konfigurację połączenia bezprzewodowej sieci lokalnej: SSID, hasło, adres IP PC, port sieciowy urządzenia, port sieciowy PC. By wykonać konfigurację należy:
