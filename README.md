@@ -57,16 +57,16 @@ rezystor 2 | +
 Program działający na urządzeniu.
 
 ### [sample_WIFI_CONFIG.h](../v2.0/sample_WIFI_CONFIG.h)
-Plik nagłówkowy dla `3d_remote.ino`, zawiera konfigurację połączenia bezprzewodowej sieci lokalnej: SSID, hasło, adres IP PC, port sieciowy urządzenia, port sieciowy PC. By wykonać konfigurację należy:
- - skopiować go pod nową nazwą`WIFI_CONFIG.h`: `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`;
- - uzupełnić `WIFI_CONFIG.h` odpowiednimi własnymi danymi;
+Plik nagłówkowy dla 3d_remote.ino, zawiera konfigurację połączenia bezprzewodowej sieci lokalnej: SSID, hasło, adres IP PC, port sieciowy urządzenia, port sieciowy PC. By wykonać konfigurację należy:
+ - skopiować go pod nową nazwą WIFI_CONFIG.h: `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`;
+ - uzupełnić WIFI_CONFIG.h odpowiednimi własnymi danymi;
 
 ### [remote.py](../v2.0/remote.py)
 #### Klasa CharSignal
 Reprezentuje odczyt sygnału znaku w postaci zapisu odczytów akcelerometru wykonanego gestu znaku i pola znaku.
  - Pola:
     - `char: str` - znak A-Z, "-" (ozn. backspace), "\_" (ozn. spację) lub "?" (znak nieznany - do oszacowania);
-    - `signal` - lista pythonowska dwywymiarowa float odczytów akcelerometru;
+    - `signal` - lista pythonowska dwuwymiarowa float odczytów akcelerometru;
  - Metody:
     - `set_length(new_length)` - ustawia ilość wierszy pola sygnałów na new_length, 'przycina' lub uzupełnia wartościami zerowymi;
     - `get_array()` - zwraca pole sygnałów typu tablicy numpy zamiast użycia list pythonowskich;
@@ -80,7 +80,7 @@ Przechowuje zmienne konfiguracji sensorów z poziomu aplikacji.
     - `gyro_treshold: float` - próg odczytów żyroskopu w trybie kursora;
     - `double_click_time: float` - maksymalny czas rejestracji akcji podwójnego kliknięcia;
     - `button_hold_time: float` - minimalny czas rejestracji akcji przytrzymania przycisku;
-    - `hybrid_switch_treshold: float` - próg zmiany wejścia akcelerometru na żyroskop w trybie kursra w trybie hybrydowym;
+    - `hybrid_switch_treshold: float` - próg zmiany wejścia żyroskopu na akcelerometr w trybie kursora w trybie hybrydowym;
 #### Klasa ConnectionConfig
 Przechowuje zmienne konfiguracji połączenia z urządzeniem w bezprzewodowej sieci lokalnej.
  - Pola:
@@ -89,7 +89,7 @@ Przechowuje zmienne konfiguracji połączenia z urządzeniem w bezprzewodowej si
     - `server_ip: str` - adres IP PC;
     - `server_port: int` - port sieciowy PC;
     - `server_addr` - krotka `(server_ip, server_port)`;
-    - `remote addr` - krotka `(remote_ip, remote_port)`;
+    - `remote_addr` - krotka `(remote_ip, remote_port)`;
 #### Klasa TrainingConfig
 Przechowuje zmienne konfiguracji dla trybu uczenia maszynowego.
  - Pola:
@@ -107,17 +107,17 @@ Główna klasa pliku, zawiera wszystkie funkcje projektu ze strony PC.
    - `train_labels` - przechowuje tablicę liczb "labels" odpowiadające indeksom pola `available_chars`, wykorzystywane przy uczeniu;
    - `train_values` - przechowuje tablicę sygnałów gestów znaków, wykorzystywane przy uczeniu;
    - `training_sequence` - przechowuje listę znaków których sygnały mają być wprowadzone przez użytkownika (gesty znaków) i zapisane w plikach;
-   - `_model` - przechowuje wytrenowany z zebranych danych model;
+   - `model` - przechowuje wytrenowany z zebranych danych model uczenia maszynowego;
    - `available_chars: tuple` - przechowuje zbiór dostępnych do trenowania znaków, bez powtórzeń;
  - Metody:
    - konstruktor - tworzy wszystkie opisane pola, tworzy obiekt socket, tworzy podkatalog `TrainingConfig.training_data_path` jeśli nie istnieje;
    - `verbose(s)` - drukuje na ekran ciąg znaków `s` jeśli pole `verbose` ma wartość `True`;
    - `send_ready_signal()` - wysyła wartość 1 do urządzenia, które po włączeniu oczekuje na ten sygnał i nie nada żadnych danych do tego momentu;
-   - `receive_data()` - odbiera przesłaby przez urządzenie sygnał (ciąg znaków), dekoduje i zwraca odpowiednio: ciąg znaków w przypadku sygnału akcji przycisku, krotka dwóch list pythonowskich z odczytami akcelerometru i żyroskopu (pojedyńczy wiersz);
+   - `receive_data()` - odbiera przesłany przez urządzenie sygnał (ciąg znaków), dekoduje i zwraca odpowiednio: ciąg znaków w przypadku sygnału akcji przycisku, krotka dwóch list pythonowskich z odczytami akcelerometru i żyroskopu (pojedynczy wiersz);
    - `receive_char(char)` - korzystając z `receive_data()` odbiera sygnał całego gestu znaku i zwraca instancję CharSignal o zadanym przez argument `char` polu `char`;
-   - `cursor_mode()` - wykorzystując konfigurację w polu `sensor_config` odbiera w pętli i przetwarza sygnały urządzenia, reaguje na podwójne kliknięcie przycisku Main wyjściem z pętli, przycisk Sec powoduje wywołanie kliknięcia lewego przycisku myszki, przytrzymanie prawego przycisku myszki, ruchy kursora odbywają się przy przytrzymaniu przycisku Main w zależności od wybranego trybu sterowania: akceleratora, żyroskopu, hybrydowego;
+   - `cursor_mode()` - wykorzystując konfigurację w polu `sensor_config` odbiera w pętli i przetwarza sygnały urządzenia, reaguje na podwójne kliknięcie przycisku Main wyjściem z pętli, przycisk Sec powoduje wywołanie kliknięcia lewego przycisku myszki, przytrzymanie - prawego przycisku myszki, ruchy kursora odbywają się przy przytrzymaniu przycisku Main w zależności od wybranego trybu sterowania: akceleratora, żyroskopu, hybrydowego;
    - `prepare_keyboard()` - wywołuje metody `prepare_training_data()`, `train()`, drukuje na ekran wielkość zbioru uczącego;
-   - `keyboard_mode()` - wykorzystując metodę `receive_char()` w pętli odbiera sygnały znaków i przewiduje znak którego gest został wykonany urządzeniem, wprowadza znak w miejcu kursora, przycisk Sec przełącza klaswisz CapsLock, podwójne kliknięcie przycisku Main wychodzi z pętli wprowadzania;
+   - `keyboard_mode()` - wykorzystując metodę `receive_char()` w pętli odbiera sygnały znaków i przewiduje znak którego gest został wykonany urządzeniem, wprowadza znak w miejscu kursora, przycisk Sec przełącza klawisz CapsLock, podwójne kliknięcie przycisku Main wychodzi z pętli wprowadzania;
    - `cursor_keyboard_mode()` - wywołuje metodę `prepare_keyboard()`, w nieskończonej pętli wywołuje metody `cursor_mode()`, `keyboard_mode()`, pozwala to na przełączanie się między trybem kursora i klawiatury;
    - `prepare_char(data)` - zwraca tablicę numpy sygnału gestu `data` o długości zadanej przez `TrainingConfig.max_input_len`;
    - `predict_char(data)` - zwraca znak oszacowany przez model uczenia maszynowego na podstawie sygnału gestu `data`;
@@ -126,13 +126,15 @@ Główna klasa pliku, zawiera wszystkie funkcje projektu ze strony PC.
    - `write_to_dataset(char_signal)` - zapisuje obiekt CharSignal `char_signal` do nowego pliku `.csv` w podkatalogu zadanym przez `TrainingConfig.training_data_path`, konwencja nazewnicza: `<znak><numer pliku znaku>.csv`, przykład: `C15.csv`, `-0.csv`, `_50.csv`;
    - `prepare_training_data()` - czyta sygnały z plików `.csv` z podkatalogu zadanego przez `TrainingConfig.training_data_path` i zapisuje do pól `train_labels` (z nazwy pliku), `train_values` (zwartość - sygnał);
    - `train()` - wykorzystując przygotowane przez `prepare_training_data()` `train_labels` i `train_values` wykorzystuje TensorFlow do utworzenia modelu zapisanego do pola `model`;
-   - `train_mode(char_sequence, repeats, shuffle_chars, include_extra_chars)` - wykorzystuje `set_training_char_sequence()`, iterując po wypełnionym polu `training_sequence` wypisuje kolejne znaki na ekran i przy pomocy `write_to_dataset()` zapisuje sygnał wykonanego przez użytkownika gestu znaku dop pliku;
+   - `train_mode(char_sequence, repeats, shuffle_chars, include_extra_chars)` - wykorzystuje `set_training_char_sequence()`, iterując po wypełnionym polu `training_sequence` wypisuje kolejne znaki na ekran i przy pomocy `write_to_dataset()` zapisuje sygnał wykonanego przez użytkownika gestu znaku do pliku;
 #### funkcja `main()`
 W przypadku uruchomienia pliku `remote.py` program tworzy obiekt Remote ze standardową konfiguracją, wywołuje `send_ready_signal()` a następnie `cursor_keyboard_mode()`.
 
 ### [training_example.py](../v2.0/training_example.py)
+Program mający na celu wykorzystanie komponentów remote.py w celu zebrania sygnałów gestów użytkownika znaków "L", "M", "N" w 7 powtórzeniach, z wprowadzaniem w losowej kolejności. Po zakończeniu uczenia przechodzi w tryb wprowadzania klawiatury gdzie użytkownik może sprawdzić efekt  wprowadzonych wcześniej danych. Zapis odbywa się w niestandarodwym podfolderze by brane pod uwagę były tylko nowe dane.
 
 ### [requirements.txt](../v2.0/requirements.txt)
+Plik zawierający wymagające instalacji nazwy bibliotek python3 wraz z wersjami. Prosta instalacja: `pip install -r requirements.txt`.
 
 ### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/v2.0/README.md)
 
