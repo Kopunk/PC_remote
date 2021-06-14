@@ -24,7 +24,7 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - Wire
    - Obsługa ESP8266: 
       - dodanie ścieżki http://arduino.esp8266.com/stable/package_esp8266com_index.json w IDE: Preferences > Additional boards manager URLs
-      -  instalacja esp8266 by ESP8266 Community
+      - instalacja esp8266 by ESP8266 Community
 2. Python 3.8+ z bibliotekami ([zgodnie z requirements.txt](./requirements.txt)):
    - numpy 1.19.2
    - pynput 1.7.3
@@ -165,14 +165,12 @@ W przypadku uruchomienia pliku `remote.py` program tworzy obiekt Remote ze stand
 Program mający na celu wykorzystanie komponentów remote.py w celu zebrania sygnałów gestów użytkownika znaków "L", "M", "N" w 7 powtórzeniach, z wprowadzaniem w losowej kolejności. Po zakończeniu uczenia przechodzi w tryb wprowadzania klawiatury gdzie użytkownik może sprawdzić efekt  wprowadzonych wcześniej danych. Zapis odbywa się w niestandarodwym podfolderze by brane pod uwagę były tylko nowe dane.
 
 ### [requirements.txt](../v2.0/requirements.txt)
-Plik zawierający wymagające instalacji nazwy bibliotek python3 wraz z wersjami. Prosta instalacja: `pip install -r requirements.txt`.
+Plik zawierający wymagające instalacji nazwy bibliotek python3 wraz z wersjami. Instalacja: `pip install -r requirements.txt`.
 
 ### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/v2.0/README.md)
 
 ### Opis klasy Remote
 Klasa Remote zawiera metody pozwalające na łączność z urządzeniem, sterowanie ruchami kursora, naciskanie przycisków myszki oraz klawiatury, łatwe tworzenie zbiorów sygnałów akcelerometru odpowiadających znakom A-Z, spacja i backspace, uczenie maszynowe ze zbiorów sygnałów przy pomocy TensorFlow oraz metody pomocnicze. Opis możliwego użytku klasy:
-   - Inicjalizowana z instancjami klas SensorConfig, ConnectionConfig, TrainingConfig (przechowujące odpowiednio konfiguracje reakcji na sygnały urządzenia; połaczenia przez WiFi; położenie danych treningowych i maksymalna długość sygnału znaku).
-   - Wysłanie sygnału gotowości programu.
    - Tryb kursora:
       - poruszanie kursorem przy pomocy odczytów z akcelerometru, żyroskopu lub połączenia sygnałów obu przy przytrzymaniu przycisku Main
       - kliknięcie lewym przyciskiem myszki poprzez przycisk Sec
@@ -186,13 +184,38 @@ Klasa Remote zawiera metody pozwalające na łączność z urządzeniem, sterowa
    - Tryb kursora i klawiatury:
       - przełączanie pomiędzy trybem kursora i klawiatury przy wyjściu z danego trybu
    - Tryb szkolenia:
-      - ustalenie sekwencji znaków do wprowadzania i lokalizacji plików sygnałów do późniejszego szkolenia
-      - odczytywanie plików .csv z zapisanymi sygnałami (format nazwy pliku: ZnakNumer.csv - A12.csv, \_3.csv, X0.csv, \-10.csv)
-      - uczenie ze zbioru sygnałów treningowych
+      - 
 
 ## Opis działania
+### Instalacja
+```
+git clone git@github.com:Kopunk/PC_remote.git
+cd PC_remote
+```
+#### Konfiguracja sieciowa
+ - skopiować sample_WIFI_CONFIG.h pod nową nazwą WIFI_CONFIG.h: `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`;
+ - ustawić stały lokalny adres IP komputera, wprowadzić go w konfiguracji WIFI_CONFIG.h oraz remote.py;
+ - adres IP urządzenia można sprawdzić przy pomocy podglądu monitora szeregowego Arduino IDE, wprowadzić go w konfiguracji remote.py przy inicjalizacji klasy (jak pokazano poniżej);
+ ```python3
+ def main():
+    r = Remote(SensorConfig(), ConnectionConfig(remote_ip='<ip urządzenia>', server_ip='<ip komputera>'), TrainingConfig())
+ ```
+ #### Instalacja wymaganych bibliotek
+ - instalacja bibliotek python3: `pip install -r requirements.txt`
+ - instalacja bibliotek dla mikrokontrolera (z poziomu Arduino IDE):
+   - dodanie ścieżki http://arduino.esp8266.com/stable/package_esp8266com_index.json w IDE: Preferences > Additional boards manager URLs
+   - instalacja esp8266 by ESP8266 Community
+   - instalacja Adafruit MPU6050 by Adafruit
+
+### Omówienie działania projektu ze strony użytkownika
+Aby uruchomić i połączyć urządzenie należy w pierwszej kolejności podłączyć urządzenie do zasilania (przez USB lub podłączając baterie) a następnie uruchomić program remote.py. W trakcie działania urządzenia można bez problemów podłączać i odłączać kabel USB jeśli podłączone jest zasilanie z baterii. 
+
+Domyślnie po włączeniu aktywny jest tryb kursora, aby przesunąć kursor należy przytrzymać przycisk Main a następnie wykonać ruch urządzeniem obserwując kursor na ekranie. W terminalu uruchomionego programu domyślnie wyświetlają się komunikaty ułatwiające orientację. Aby wykonać kliknięcie lewym przyciskiem myszy należy nacisnąć przycisk Sec, operacja jest rejestrowana wraz ze zwolnieniem przycisku. Należy naciskać tylko jeden przycisk na raz. Aby wykonać kliknięcie prawym przyciskiem myszy należy przytrzymać przycisk Sec. Aby przełączyć się w tryb klawiatury należy dwukrotnie nacisnąć przycisk Main.
+
+W trybie klawiatury przytrzymanie przycisku Main i wykonanie urządzeniem gestu wprowadzanego znaku spowoduje wprowadzenie znaku w miejscu kursora na komputerze. Gest - przesunięcie poziomo w lewo spowoduje usunięcie znaku przed kursorem (backspace), natomiast przesunięcie poziomo w prawo spowoduje wprowadzenie spacji. Aby przełączyć klawisz CapsLock należy nacisnąć przycisk Sec. Obecnie zakładane jest używanie znaków z zakresu A-Z (oraz a-z po przełączeniu CapsLock, gesty pozostają takie same), spacji oraz backspace. Aby przełączyć się z powrotem w tryb kursora należy dwukrotnie nacisnąć przycisk Main.
 
 ## Wnioski
+Cel projektu został w pełni osiągnięty. Udało się stworzyć nie tylko narzędzie zdalnej kontroli kursora, ale również "wirtualnej klawiatury". Kontrola kursora oraz wprowadzania znaków są wystarczająco dokładne by dało się praktycznie wykorzystywać projekt. Ze strony technicznej najwięcej trudności sprawiło zastosowanie bublioteki TensorFlow ze względu na stosunkowo małe doświadczenie z uczeniem maszynowym. Klasa Remote wraz z klasami pomocniczymi jest prosta do wykorzystania w osobnych programach (jak pokazano w [training_example.py](https://github.com/Kopunk/PC_remote/v2.0/training_example.py)) i pozwala wykorzystywać urządzenie na kilka sposobów.
 
 ## Załączniki
 
