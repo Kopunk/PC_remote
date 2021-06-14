@@ -5,7 +5,7 @@ The following documentation is written in polish as it will be taken under gradi
 ## Cel projektu
 Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - Kontrola kursora za pośrednictwem sensorów ruchu, obsługa lewego i prawego przycisku myszki.
-   - Dodatkowo: kontrola wejścia klawiatury - zapisywanie pojedynczych znaków gestami, obsługa spacji oraz backspace, przełączanie klawisza caps lock.
+   - Dodatkowo: kontrola wejścia klawiatury - zapisywanie pojedynczych znaków gestami, obsługa spacji oraz backspace, przełączanie klawisza CapsLock.
 
 ## BOM (Bill of Materials) - wykorzystane elementy
 ### Hardware
@@ -25,7 +25,7 @@ Stworzenie bezprzewodowego urządzenia wejścia dla komputera:
    - Obsługa ESP8266: 
       - dodanie ścieżki http://arduino.esp8266.com/stable/package_esp8266com_index.json w IDE: Preferences > Additional boards manager URLs
       - instalacja esp8266 by ESP8266 Community
-2. Python 3.8+ z bibliotekami ([zgodnie z requirements.txt](./requirements.txt)):
+2. Python 3.8+ z bibliotekami ([zgodnie z requirements.txt](https://github.com/Kopunk/PC_remote/blob/requirements.txt)):
    - numpy 1.19.2
    - pynput 1.7.3
    - tensorflow 2.5.0
@@ -53,7 +53,7 @@ rezystor 1 | +
 rezystor 2 | +
 
 ## Listing programu
-### [3d_remote.ino](../v2.0/3d_remote.ino)
+### [3d_remote.ino](https://github.com/Kopunk/PC_remote/blob/v2.0/3d_remote.ino)
 Program działający na urządzeniu. Wymaga pliku nagłówkowego WIFI_CONFIG.h.
  - Stałe:
    - `int buttonPinMain` - numer pinu połączenia przycisku Main;
@@ -87,12 +87,12 @@ Program działający na urządzeniu. Wymaga pliku nagłówkowego WIFI_CONFIG.h.
       - w przypadku naciśnięcia przycisku Sec wysyła wiadomość naciśnięcia przycisku Sec przez UDP i ustawia wartość `buttonPressedSec` na `true`;
       -  w przeciwnym wypadku jeśli `buttonPressedSec` ma wartość `true`, ustawia ją na `false` i wysyła wiadomość zwolnienia przycisku Sec przez UDP;
 
-### [sample_WIFI_CONFIG.h](../v2.0/sample_WIFI_CONFIG.h)
+### [sample_WIFI_CONFIG.h](https://github.com/Kopunk/PC_remote/blob/v2.0/sample_WIFI_CONFIG.h)
 Plik nagłówkowy dla 3d_remote.ino, zawiera konfigurację połączenia bezprzewodowej sieci lokalnej: SSID, hasło, adres IP PC, port sieciowy urządzenia, port sieciowy PC. By wykonać konfigurację należy:
  - skopiować go pod nową nazwą WIFI_CONFIG.h: `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`;
  - uzupełnić WIFI_CONFIG.h odpowiednimi własnymi danymi;
 
-### [remote.py](../v2.0/remote.py)
+### [remote.py](https://github.com/Kopunk/PC_remote/blob/v2.0/remote.py)
 #### Klasa CharSignal
 Reprezentuje odczyt sygnału znaku w postaci zapisu odczytów akcelerometru wykonanego gestu znaku i pola znaku.
  - Pola:
@@ -154,48 +154,29 @@ Główna klasa pliku, zawiera wszystkie funkcje projektu ze strony PC.
    - `predict_char(data)` - zwraca znak oszacowany przez model uczenia maszynowego na podstawie sygnału gestu `data`;
    - `set_training_char_sequence(chars, repeats, shuffle_chars, include_extra_chars)` - na podstawie listy znaków `chars` tworzy listę `training_sequence`, dodaje znak spacji i backspace w zależności od `include_extra_chars`, ilość powtórzeń każdego znaku w zależności od `repeats`, ustawia losową kolejność `training_sequence` w zależności od `shuffle_chars`, zwraca łączną długość `training_sequence`;
    - `next_file_no(char)` - zwraca numer następnego pliku dla danego znaku `char` w podkatalogu zadanym przez `TrainingConfig.training_data_path`;
-   - `write_to_dataset(char_signal)` - zapisuje obiekt CharSignal `char_signal` do nowego pliku `.csv` w podkatalogu zadanym przez `TrainingConfig.training_data_path`, konwencja nazewnicza: `<znak><numer pliku znaku>.csv`, przykład: `C15.csv`, `-0.csv`, `_50.csv`;
-   - `prepare_training_data()` - czyta sygnały z plików `.csv` z podkatalogu zadanego przez `TrainingConfig.training_data_path` i zapisuje do pól `train_labels` (z nazwy pliku), `train_values` (zwartość - sygnał);
+   - `write_to_dataset(char_signal)` - zapisuje obiekt CharSignal `char_signal` do nowego pliku .csv w podkatalogu zadanym przez `TrainingConfig.training_data_path`, konwencja nazewnicza: `<znak><numer pliku znaku>.csv`, przykład: C15.csv, -0.csv, \_50.csv;
+   - `prepare_training_data()` - czyta sygnały z plików .csv z podkatalogu zadanego przez `TrainingConfig.training_data_path` i zapisuje do pól `train_labels` (z nazwy pliku), `train_values` (zwartość - sygnał);
    - `train()` - wykorzystując przygotowane przez `prepare_training_data()` `train_labels` i `train_values` wykorzystuje TensorFlow do utworzenia modelu zapisanego do pola `model`;
    - `train_mode(char_sequence, repeats, shuffle_chars, include_extra_chars)` - wykorzystuje `set_training_char_sequence()`, iterując po wypełnionym polu `training_sequence` wypisuje kolejne znaki na ekran i przy pomocy `write_to_dataset()` zapisuje sygnał wykonanego przez użytkownika gestu znaku do pliku;
 #### funkcja `main()`
 W przypadku uruchomienia pliku `remote.py` program tworzy obiekt Remote ze standardową konfiguracją, wywołuje `send_ready_signal()` a następnie `cursor_keyboard_mode()`.
 
-### [training_example.py](../v2.0/training_example.py)
+### [training_example.py](https://github.com/Kopunk/PC_remote/blob/v2.0/training_example.py)
 Program mający na celu wykorzystanie komponentów remote.py w celu zebrania sygnałów gestów użytkownika znaków "L", "M", "N" w 7 powtórzeniach, z wprowadzaniem w losowej kolejności. Po zakończeniu uczenia przechodzi w tryb wprowadzania klawiatury gdzie użytkownik może sprawdzić efekt  wprowadzonych wcześniej danych. Zapis odbywa się w niestandarodwym podfolderze by brane pod uwagę były tylko nowe dane.
 
-### [requirements.txt](../v2.0/requirements.txt)
+### [requirements.txt](https://github.com/Kopunk/PC_remote/blob/v2.0/requirements.txt)
 Plik zawierający wymagające instalacji nazwy bibliotek python3 wraz z wersjami. Instalacja: `pip install -r requirements.txt`.
 
-### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/v2.0/README.md)
-
-### Opis klasy Remote
-Klasa Remote zawiera metody pozwalające na łączność z urządzeniem, sterowanie ruchami kursora, naciskanie przycisków myszki oraz klawiatury, łatwe tworzenie zbiorów sygnałów akcelerometru odpowiadających znakom A-Z, spacja i backspace, uczenie maszynowe ze zbiorów sygnałów przy pomocy TensorFlow oraz metody pomocnicze. Opis możliwego użytku klasy:
-   - Tryb kursora:
-      - poruszanie kursorem przy pomocy odczytów z akcelerometru, żyroskopu lub połączenia sygnałów obu przy przytrzymaniu przycisku Main
-      - kliknięcie lewym przyciskiem myszki poprzez przycisk Sec
-      - kliknięcie prawym przyciskiem myszki poprzez przytrzymanie przycisku Sec
-      - wyjście poprzez podwójne kliknięcie (zwolnienie) przycisku Main
-   - Tryb klawiatury:
-      - wprowadzenie znaku poprzez przytrzymanie przycisku Main i wykonanie gestu urządzeniem (zależne od zbioru treningowego - można wprowadzić tylko kilka znaków)
-      - wprowadzenie spacji lub usunięcie znaku przed kursorem (backspace) (podobnie jak powyżej)
-      - przełączenie przycisku caps lock poprzez naciśnięcie przycisku Sec
-      - wyjście poprzez podwójne kliknięcie (zwolnienie) przycisku Main
-   - Tryb kursora i klawiatury:
-      - przełączanie pomiędzy trybem kursora i klawiatury przy wyjściu z danego trybu
-   - Tryb szkolenia:
-      - 
+### [Ta dokumentacja](https://github.com/Kopunk/PC_remote/blob/v2.1/README.md)
 
 ## Opis działania
 ### Instalacja
-```
-git clone git@github.com:Kopunk/PC_remote.git
-cd PC_remote
-```
+`git clone git@github.com:Kopunk/PC_remote.git`
+
 #### Konfiguracja sieciowa
- - skopiować sample_WIFI_CONFIG.h pod nową nazwą WIFI_CONFIG.h: `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`;
- - ustawić stały lokalny adres IP komputera, wprowadzić go w konfiguracji WIFI_CONFIG.h oraz remote.py;
- - adres IP urządzenia można sprawdzić przy pomocy podglądu monitora szeregowego Arduino IDE, wprowadzić go w konfiguracji remote.py przy inicjalizacji klasy (jak pokazano poniżej);
+ - skopiować sample_WIFI_CONFIG.h pod nową nazwą WIFI_CONFIG.h: `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`
+ - ustawić stały lokalny adres IP komputera, wprowadzić go w konfiguracji WIFI_CONFIG.h oraz remote.py
+ - adres IP urządzenia można sprawdzić przy pomocy podglądu monitora szeregowego Arduino IDE, wprowadzić go w konfiguracji remote.py przy inicjalizacji klasy (jak pokazano poniżej)
  ```python3
  def main():
     r = Remote(SensorConfig(), ConnectionConfig(remote_ip='<ip urządzenia>', server_ip='<ip komputera>'), TrainingConfig())
@@ -208,59 +189,16 @@ cd PC_remote
    - instalacja Adafruit MPU6050 by Adafruit
 
 ### Omówienie działania projektu ze strony użytkownika
-Aby uruchomić i połączyć urządzenie należy w pierwszej kolejności podłączyć urządzenie do zasilania (przez USB lub podłączając baterie) a następnie uruchomić program remote.py. W trakcie działania urządzenia można bez problemów podłączać i odłączać kabel USB jeśli podłączone jest zasilanie z baterii. 
+Aby uruchomić i połączyć urządzenie należy w pierwszej kolejności podłączyć urządzenie do zasilania (przez USB lub podłączając baterie) a następnie uruchomić program remote.py. W trakcie działania urządzenia można bez problemów podłączać i odłączać kabel USB jeśli podłączone jest zasilanie z baterii. W terminalu uruchomionego programu domyślnie wyświetlają się komunikaty ułatwiające orientację.
 
-Domyślnie po włączeniu aktywny jest tryb kursora, aby przesunąć kursor należy przytrzymać przycisk Main a następnie wykonać ruch urządzeniem obserwując kursor na ekranie. W terminalu uruchomionego programu domyślnie wyświetlają się komunikaty ułatwiające orientację. Aby wykonać kliknięcie lewym przyciskiem myszy należy nacisnąć przycisk Sec, operacja jest rejestrowana wraz ze zwolnieniem przycisku. Należy naciskać tylko jeden przycisk na raz. Aby wykonać kliknięcie prawym przyciskiem myszy należy przytrzymać przycisk Sec. Aby przełączyć się w tryb klawiatury należy dwukrotnie nacisnąć przycisk Main.
+Domyślnie po włączeniu aktywny jest tryb kursora. Aby przesunąć kursor należy przytrzymać przycisk Main a następnie wykonać ruch urządzeniem obserwując kursor na ekranie. Aby wykonać kliknięcie lewym przyciskiem myszy należy nacisnąć przycisk Sec, operacja jest rejestrowana wraz ze zwolnieniem przycisku. Należy naciskać tylko jeden przycisk na raz. Aby wykonać kliknięcie prawym przyciskiem myszy należy przytrzymać przycisk Sec. Aby przełączyć się w tryb klawiatury należy dwukrotnie nacisnąć przycisk Main.
 
 W trybie klawiatury przytrzymanie przycisku Main i wykonanie urządzeniem gestu wprowadzanego znaku spowoduje wprowadzenie znaku w miejscu kursora na komputerze. Gest - przesunięcie poziomo w lewo spowoduje usunięcie znaku przed kursorem (backspace), natomiast przesunięcie poziomo w prawo spowoduje wprowadzenie spacji. Aby przełączyć klawisz CapsLock należy nacisnąć przycisk Sec. Obecnie zakładane jest używanie znaków z zakresu A-Z (oraz a-z po przełączeniu CapsLock, gesty pozostają takie same), spacji oraz backspace. Aby przełączyć się z powrotem w tryb kursora należy dwukrotnie nacisnąć przycisk Main.
 
+W przypadku korzystania z trybu uczenia w oknie terminala wyświetlają się znaki do wprowadzenia, użytkownik powinien postępować tak jakby chciał wprowadzić wyświetlony znak w trybie klawiatury.
+
 ## Wnioski
-Cel projektu został w pełni osiągnięty. Udało się stworzyć nie tylko narzędzie zdalnej kontroli kursora, ale również "wirtualnej klawiatury". Kontrola kursora oraz wprowadzania znaków są wystarczająco dokładne by dało się praktycznie wykorzystywać projekt. Ze strony technicznej najwięcej trudności sprawiło zastosowanie bublioteki TensorFlow ze względu na stosunkowo małe doświadczenie z uczeniem maszynowym. Klasa Remote wraz z klasami pomocniczymi jest prosta do wykorzystania w osobnych programach (jak pokazano w [training_example.py](https://github.com/Kopunk/PC_remote/v2.0/training_example.py)) i pozwala wykorzystywać urządzenie na kilka sposobów.
+Cel projektu został w pełni osiągnięty. Udało się stworzyć nie tylko narzędzie zdalnej kontroli kursora, ale również "wirtualnej klawiatury". Kontrola kursora oraz wprowadzania znaków są wystarczająco dokładne by dało się praktycznie wykorzystywać projekt. Ze strony technicznej najwięcej trudności sprawiło zastosowanie bublioteki TensorFlow ze względu na stosunkowo małe doświadczenie z uczeniem maszynowym. Klasa Remote wraz z klasami pomocniczymi jest prosta do wykorzystania w osobnych programach (jak pokazano w [training_example.py](https://github.com/Kopunk/PC_remote/blob/v2.0/training_example.py)) i pozwala wykorzystywać urządzenie na kilka sposobów.
 
 ## Załączniki
 
-# ---TMP---
-
-### Opis instalacji
-   - skonfigurować połączenie w sieci lokalnej: 
-      - `cp sample_WIFI_CONFIG.h WIFI_CONFIG.h`
-      - uzupełnić WIFI_CONFIG.h odpowiednimi własnymi danymi
-   - zainstalować potrzebne biblioteki i menadżer płytek w Arduino IDE
-   - wgrać program do mikrokontrolera przy pomocy Arduino IDE
-   - zainstalować potrzebne biblioteki python3: `pip install -r requirements.txt`
-   - uczynić wymagane aplikacje .py wykonywalnymi
-
-# Omówienie Działania i Użytkowania
-## Opis działania
-### Opis działania .ino
-   - Inicjalizuje połączenie wg WIFI_CONFIG.h. 
-   - Oczekuje sygnału gotowości programu. 
-   - W przypadku naciśnięcia / przytrzymania przycisku Main przesyła ciągi znaków odpowiadające odczytom akcelerometru i żyroskopu.
-   - W przypadku zwolnienia przycisku Main przesyła sygnał zwolnienia przycisku Main.
-   - W przypadku naciśnięcia / przytrzymania przycisku Sec przesyła sygnał / sygnały naciśnięcia przycisku Sec.
-   - W przypadku zwolnienia przycisku Sec przesyła sygnał zwolnienia przycisku Sec.
-### Opis klasy Remote
-Klasa Remote zawiera metody pozwalające na łączność z urządzeniem, sterowanie ruchami kursora, naciskanie przycisków myszki oraz klawiatury, łatwe tworzenie zbiorów sygnałów akcelerometru odpowiadających znakom A-Z, spacja i backspace, uczenie maszynowe ze zbiorów sygnałów przy pomocy TensorFlow oraz metody pomocnicze. Opis możliwego użytku klasy:
-   - Inicjalizowana z instancjami klas SensorConfig, ConnectionConfig, TrainingConfig (przechowujące odpowiednio konfiguracje reakcji na sygnały urządzenia; połaczenia przez WiFi; położenie danych treningowych i maksymalna długość sygnału znaku).
-   - Wysłanie sygnału gotowości programu.
-   - Tryb kursora:
-      - poruszanie kursorem przy pomocy odczytów z akcelerometru, żyroskopu lub połączenia sygnałów obu przy przytrzymaniu przycisku Main
-      - kliknięcie lewym przyciskiem myszki poprzez przycisk Sec
-      - kliknięcie prawym przyciskiem myszki poprzez przytrzymanie przycisku Sec
-      - wyjście poprzez podwójne kliknięcie (zwolnienie) przycisku Main
-   - Tryb klawiatury:
-      - wprowadzenie znaku poprzez przytrzymanie przycisku Main i wykonanie gestu urządzeniem (zależne od zbioru treningowego - można wprowadzić tylko kilka znaków)
-      - wprowadzenie spacji lub usunięcie znaku przed kursorem (backspace) (podobnie jak powyżej)
-      - przełączenie przycisku caps lock poprzez naciśnięcie przycisku Sec
-      - wyjście poprzez podwójne kliknięcie (zwolnienie) przycisku Main
-   - Tryb kursora i klawiatury:
-      - przełączanie pomiędzy trybem kursora i klawiatury przy wyjściu z danego trybu
-   - Tryb szkolenia:
-      - ustalenie sekwencji znaków do wprowadzania i lokalizacji plików sygnałów do późniejszego szkolenia
-      - odczytywanie plików .csv z zapisanymi sygnałami (format nazwy pliku: ZnakNumer.csv - A12.csv, \_3.csv, X0.csv, \-10.csv)
-      - uczenie ze zbioru sygnałów treningowych
-## Dodatkowe informacje
-   - klasa CharSignal służy do przechowywania nazwy znaku wraz z odpowiadającym sygnałem, umożliwia zwracanie tablicy numpy sygnału, skracanie oraz wydłużanie  sygnału (uzupełnienie zerami)
-   - atrybut verbose klasę Remote gdy o wartości True umożliwia wyświetlanie komunikatów dotyczących pracy programu, domyślnie ma wartość True
-   - plik training_example.py zawiera przykładowe użycie metod Remote w celu uzupełniania zbioru sygnałów do późniejszego szkolenia
-   - w sekwencji znaków do wprowadzania oraz w nazwach plików z sygnałami podkreślnik i myślnik oznaczają kolejno spację oraz backspace
