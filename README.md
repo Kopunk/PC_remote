@@ -1,4 +1,9 @@
-# PC Remote
+# PC Remote - first iteration of the project
+
+See [github.com/Kopunk/pc-remote-2](https://github.com/Kopunk/pc-remote-2) for the version implementing embedded machine learning.
+
+---
+
 Accelerometer / gyroscope - based PC cursor controller & gesture character input - a university project. <br>
 The following documentation is written in polish as it will be taken under grading.
 
